@@ -170,6 +170,10 @@ struct variable4 System_variables[] = {
 };
 /*    (L = length of the oidsuffix) */
 
+/* Local function Declaration */
+void System_GetProcStat(u_long*, u_long*, u_long*, u_long*, 
+			u_long*, u_long*, u_long*, u_long*, u_long*);
+
 /* Global variable Declaration */
 static struct timeval gstDCTimeVal={0};
 unsigned char gString[SPRINT_MAX_LEN];
@@ -247,7 +251,11 @@ var_System(struct variable *vp,
     ulong_ret = stDCTimeStamp.tv_sec + (stDCTimeStamp.tv_usec / MICROSEC); 
 
     if(ulong_ret > CACHE_TIMEOUT){                                                /* data caching */
-        sysinfo(&stSysInfo);
+        System_GetProcStat ( &ulPgpgin, &ulPgpgout, &pswpin, &pswpout,
+			     &ulIOTot, &ulIORead, &ulBlkRead,
+		             &ulIOWrite,  &ulBlkWrite);
+
+        sysinfo(&stSysInfo);    
     }
     
     ulCpuTotal = ulCpuUser + ulCpuSys + ulCpuIdle;
@@ -497,3 +505,87 @@ var_System(struct variable *vp,
     }
     return NULL;
 }
+
+/*****************************************************************************
+ * name             :   System_GetProcStat
+ * description      :   
+ * input parameters :   None
+ * output parameters:   *ulPIn, *ulPOut,
+ *		        *ulSwPin, *ulSwOut, *ulDIOTot, *ulDIORead, 
+ *                      *ulDBlkRead, *ulDIOWrite, u_long *ulDBlkWrite 
+ * return type      :   void
+ * global variables :   None
+ * calls            :   void
+ *****************************************************************************/
+
+void
+System_GetProcStat(u_long *ulPIn,   u_long *ulPOut,
+		   u_long *ulSwPin, u_long *ulSwOut, u_long *ulDIOTot, 
+		   u_long *ulDIORead,  u_long *ulDBlkRead, 
+		   u_long *ulDIOWrite, u_long *ulDBlkWrite )
+{
+    FILE            *fpStat = NULL;
+    static char     szBuff[8192];
+    static char     *pcPos;
+    unsigned int    uiMajor, uiMinor;
+    u_long          ulTot, ulRio, ulRBlk, ulWio, ulWBlk;
+    int		    iDkIdx;
+    
+    ulTot = ulRio = ulRBlk = ulWio = ulWBlk = 0;
+    uiMajor = uiMinor = 0; 
+    *ulPIn = *ulPOut = *ulSwPin = *ulSwOut = 0;
+    *ulDIOTot = *ulDIORead = *ulDBlkRead = *ulDIOWrite = *ulDBlkWrite = 0;
+    iDkIdx = 0;  
+
+    gettimeofday(&gstDCTimeVal, NULL);
+
+    if(fpStat != NULL)
+        fclose(fpStat);
+
+    fpStat = fopen(STAT_FILE, "r");
+
+    if(fpStat != NULL){
+       while(fgets(szBuff, 8192, fpStat) != NULL){
+	   	if(!strncmp(szBuff, "page ", 5)){
+		    sscanf(szBuff, "page %lu %lu", ulPIn, ulPOut);
+		}
+		else if(!strncmp(szBuff, "swap ", 5)){
+                    sscanf(szBuff, "swap %lu %lu", ulSwPin, ulSwOut);
+		}
+		else if(!strncmp(szBuff, "disk_io:", 8)){
+		    	pcPos = strchr(szBuff, '(');
+			if (pcPos != NULL)
+			{ 
+				while ( sscanf(pcPos,"(%lu,%lu):(%lu,%lu,%lu,%lu,%lu)",
+					&uiMajor, &uiMinor, &ulTot, &ulRio, &ulRBlk, &ulWio, &ulWBlk)== 7) 
+				{
+					*ulDIOTot += ulTot;
+					*ulDIORead += ulRio;
+					*ulDBlkRead += ulRBlk;
+					*ulDIOWrite += ulWio;
+					*ulDBlkWrite += ulWBlk;
+					iDkIdx++;
+
+					if (iDkIdx >= MAXDISK)
+					{
+                            			break;
+					}
+					if ( (pcPos = strchr(pcPos, ' ')) == NULL)
+					{
+			    			break;
+					}
+				
+					while (*++pcPos == ' ');
+		    		}
+			}
+		}
+	   }  
+           if(fpStat)  
+	       fclose(fpStat);
+      }    
+      else{
+		snmp_log(LOG_ERR, "/proc/stat open error");
+      }
+}
+
+
