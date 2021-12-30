@@ -78,6 +78,7 @@ struct gstPartition{
 /* Local function Declaration */
 void partitionTable_Init();
 int  partitionTable_GetNextPartition();
+void partitionTable_GetPartition();
 
 /* Global variable Declaration */
 struct gstPartition *gpstPartitionFirst = NULL;
@@ -274,6 +275,7 @@ var_partitionTable(struct variable *vp,
 void 
 partitionTable_Init(){
   	giPartitionIdx = 1;
+	partitionTable_GetPartition();
 }
 
 /*****************************************************************************
@@ -296,3 +298,67 @@ partitionTable_GetNextPartition(){
         return -1;
     }
 }
+
+/*****************************************************************************
+ * name             :   partitionTable_GetPartition
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   void
+ * global variables :   giPartitionCnt, gpstPartitionFirst
+ * calls            :   void
+ *****************************************************************************/
+void
+partitionTable_GetPartition(){
+    FILE           *fpPart = NULL;    
+    int             iFirst = 0;
+    int		    iSize = 0;
+    char            buff[128];
+    char 	   *pcPos;
+    struct gstPartition *pstPartitionCurrent = NULL;
+
+    giPartitionCnt = 0; 
+    
+    DEBUGMSGTL(("nuri/partitionTable", "partitionTable_GetPartition\n"));
+ /*
+   if(fpPart != NULL)
+        fclose(fpPart);
+  */
+    if((fpPart = fopen(PARTITION_FILE, "r" )) != NULL){
+        memset(buff, '\0', 128);   
+        while(fgets(buff, sizeof(buff), fpPart) != NULL){
+	    if(iFirst < 2){  /* continue 2 times to bypass the header in /proc/partitions */
+		iFirst++;
+		continue;
+	    }			
+	    iSize = (giPartitionCnt + 1) * sizeof (struct gstPartition);
+	    pstPartitionCurrent = (struct gstPartition *) realloc (pstPartitionCurrent, iSize);
+	    sscanf(buff, " %ld %ld %lu %s %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu ",
+				&(pstPartitionCurrent[giPartitionCnt].uiMajor), 
+				&(pstPartitionCurrent[giPartitionCnt].uiMinor), 
+				&(pstPartitionCurrent[giPartitionCnt].ulBlocks), 
+				&(pstPartitionCurrent[giPartitionCnt].szName), 
+				&(pstPartitionCurrent[giPartitionCnt].ulRIO), 
+				&(pstPartitionCurrent[giPartitionCnt].ulRMerge), 
+				&(pstPartitionCurrent[giPartitionCnt].ulRSect), 
+				&(pstPartitionCurrent[giPartitionCnt].ulRUse),
+		        &(pstPartitionCurrent[giPartitionCnt].ulWIO), 
+				&(pstPartitionCurrent[giPartitionCnt].ulWMerge), 
+				&(pstPartitionCurrent[giPartitionCnt].ulWSect), 
+				&(pstPartitionCurrent[giPartitionCnt].ulWUse), 
+				&(pstPartitionCurrent[giPartitionCnt].ulRunning),
+				&(pstPartitionCurrent[giPartitionCnt].ulUse),
+				&(pstPartitionCurrent[giPartitionCnt].ulAveg));
+	     DEBUGMSGTL(("nuri/partitionTable","partitionTable_GetPartition: name: %s\n", pstPartitionCurrent[giPartitionCnt].szName));
+             memset(buff, '\0', 128);
+	     giPartitionCnt++;	
+        }
+	gpstPartitionFirst = pstPartitionCurrent;
+        if(fpPart)
+    	    fclose(fpPart);
+    }
+    else{
+		snmp_log(LOG_ERR,"/proc/partitions open error\n");
+    }
+}
+
