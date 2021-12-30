@@ -53,6 +53,7 @@ struct variable4 cpuTable_variables[] = {
 /* Function Prototypes */
 void cpuTable_Init();
 int cpuTable_GetNextCpu();
+void cpuTable_GetCpuStat();
 
 /* Global variables Declaration */
 int giCpuIdx = 0;
@@ -271,7 +272,8 @@ var_cpuTable(struct variable *vp,
  * calls            :   cpuTable_GetCpuStat
  *****************************************************************************/
 void cpuTable_Init(){
-    giCpuIdx = 1;  
+    giCpuIdx = 1;
+    cpuTable_GetCpuStat();   
 }     
 
 /*****************************************************************************
@@ -293,4 +295,113 @@ int cpuTable_GetNextCpu(){
 	gpstCpuStat = NULL;
         return -1;
     }
+}
+
+/*****************************************************************************
+ * name             :   cpuTable_GetCpuStat
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   void
+ * global variables :   giCpuCnt, gpstCpuFirst
+ * calls            :   void
+ *****************************************************************************/
+void cpuTable_GetCpuStat(){
+	FILE *fpStat = NULL;
+	static char 	szBuff[80];
+    	static char     *pcPos;
+    	static char    *buff = NULL;
+	int     iSize = 0;
+        int iCpuIndex = 0;
+	unsigned long ulIdx, ulUser, ulSys, ulNice, ulIdle;
+    	gstCpu *pstCpuCurrent = NULL; 
+    
+	long totalTime;
+        int i=0;
+        long newTime=0;
+        long timeDiff=0;
+ 	if(oldTime==0) {
+            oldTime = time(NULL);
+        }
+	else{
+            newTime = time(NULL);
+            timeDiff = newTime - oldTime;
+
+	    if(timeDiff<CACHE_TIMEOUT){
+  		    return;
+	    }else{
+	           oldTime = newTime;;
+	    }
+	}
+	giCpuCnt = 0;
+	if(fpStat != NULL)
+	    fclose(fpStat);	
+	fpStat = fopen(STAT, "r");
+	if(fpStat != NULL){
+            memset(szBuff, '\0', 80);
+            while(fgets(szBuff, 80, fpStat) != NULL){
+		if(!strncmp(szBuff, "cpu ", 4))
+			continue;
+		if(!strncmp(szBuff, "cpu", 3)){
+			iSize = (giCpuCnt + 1) * sizeof(gstCpu);			
+			pstCpuCurrent = (gstCpu *)realloc(pstCpuCurrent, iSize);
+			DEBUGMSGTL(("cpuTable", "line:%s\n", szBuff));
+			sscanf(szBuff, "cpu%d %lu %lu %lu %lu ",
+			    &(pstCpuCurrent[giCpuCnt].ulIdx), 
+			    &(pstCpuCurrent[giCpuCnt].ulUser), 
+			    &(pstCpuCurrent[giCpuCnt].ulNice), 
+			    &(pstCpuCurrent[giCpuCnt].ulSys), 
+			    &(pstCpuCurrent[giCpuCnt].ulIdle));
+			giCpuCnt++;
+                    memset(szBuff, '\0', 80);
+		}
+		else{
+			DEBUGMSGTL(("cpuTable", "cpu is not present in current line\n"));
+		}
+	    }
+	    gpstCpuFirst = pstCpuCurrent;
+            if(fpStat)
+	        fclose(fpStat);
+        }
+	else{
+		DEBUGMSGTL(("cpuTable", "/proc/stat open error"));
+	}
+
+/* sleep for 1 sec */
+        sleep(1); 
+	fpStat = fopen(STAT, "r");
+        iCpuIndex = 0; 
+	if(fpStat != NULL){
+            memset(szBuff, '\0', 80);
+            while(fgets(szBuff, 80, fpStat) != NULL){
+		if(!strncmp(szBuff, "cpu ", 4))
+			continue;
+		if(!strncmp(szBuff, "cpu", 3)){
+			DEBUGMSGTL(("cpuTable", "line:%s\n", szBuff));
+			sscanf(szBuff, "cpu%d %lu %lu %lu %lu ",
+			    &ulIdx, 
+			    &ulUser, 
+			    &ulNice, 
+			    &ulSys, 
+			    &ulIdle);
+			gpstCpuFirst[iCpuIndex].ulUser = ulUser - gpstCpuFirst[iCpuIndex].ulUser;
+                        gpstCpuFirst[iCpuIndex].ulNice = ulNice - gpstCpuFirst[iCpuIndex].ulNice;
+                        gpstCpuFirst[iCpuIndex].ulSys  = ulSys -  gpstCpuFirst[iCpuIndex].ulSys;
+                        gpstCpuFirst[iCpuIndex].ulIdle = ulIdle - gpstCpuFirst[iCpuIndex].ulIdle;
+			iCpuIndex ++;
+                        memset(szBuff, '\0', 80);
+		}
+		else{
+			DEBUGMSGTL(("cpuTable", "cpu is not present in current line\n"));
+		}
+	    }
+	    if(fpStat)
+	        fclose(fpStat);
+            DEBUGMSGTL(("cpuTable","Returning from GetCpuStat..\n"));
+	}
+	else{
+		DEBUGMSGTL(("cpuTable", "/proc/stat open error"));
+	}
+	
+       giCacheFlag = 1;
 }
