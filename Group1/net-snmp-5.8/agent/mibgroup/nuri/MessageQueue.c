@@ -33,6 +33,12 @@ oid MessageQueue_variables_oid[] = { 1,3,6,1,4,1,3204,1,3,29 };
 
 struct variable4 MessageQueue_variables[] = {
 /*  magic number        , variable type , ro/rw , callback fn  , L, oidsuffix */
+#define MSGQNUMIDSUSED		1
+{MSGQNUMIDSUSED,  ASN_INTEGER,  RONLY ,  var_MessageQueue, 1,  { 3 }},
+#define MSGQTOTALSEGMENTS		2
+{MSGQTOTALSEGMENTS,  ASN_INTEGER,  RONLY ,  var_MessageQueue, 1,  { 2 }},
+#define MSGQTOTALHEADERS		3
+{MSGQTOTALHEADERS,  ASN_INTEGER,  RONLY ,  var_MessageQueue, 1,  { 1 }},
 
 };
 /*    (L = length of the oidsuffix) */
@@ -76,6 +82,69 @@ init_MessageQueue(void)
                MessageQueue_variables_oid);
 
     /* place any other initialization junk you need here */
+}
+
+/*
+ * var_MessageQueue():
+ *   This function is called every time the agent gets a request for
+ *   a scalar variable that might be found within your mib section
+ *   registered above.  It is up to you to do the right thing and
+ *   return the correct value.
+ *     You should also correct the value of "var_len" if necessary.
+ *
+ *   Please see the documentation for more information about writing
+ *   module extensions, and check out the examples in the examples
+ *   and mibII directories.
+ */
+unsigned char *
+var_MessageQueue(struct variable *vp,
+                oid     *name,
+                size_t  *length,
+                int     exact,
+                size_t  *var_len,
+                WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+    static unsigned char string[SPRINT_MAX_LEN];
+    static oid objid[MAX_OID_LEN];
+    static struct counter64 c64;
+    
+    static struct msginfo stMsgInfo;
+    struct timeval stDCTimeStamp = {0};
+
+
+    if (header_generic(vp,name,length,exact,var_len,write_method)
+                                  == MATCH_FAILED )
+    return NULL;
+
+    gettimeofday(&stDCTimeStamp, NULL);
+
+    stDCTimeStamp.tv_sec = stDCTimeStamp.tv_sec - gstDCTimeVal.tv_sec;
+    stDCTimeStamp.tv_usec = stDCTimeStamp.tv_usec - gstDCTimeVal.tv_usec;
+    ulong_ret = stDCTimeStamp.tv_sec + (stDCTimeStamp.tv_usec / MICROSEC); 
+    if(ulong_ret > CACHE_TIMEOUT){
+        msgQTable_GetMsgQ();  
+        if ((msgctl (0, IPC_INFO, (struct msgid_ds *) &stMsgInfo)) < 0 )
+		return NULL;
+    }
+
+
+    /*
+   * this is where we do the value assignments for the mib results.
+   */
+    switch(vp->magic) {
+    case MSGQNUMIDSUSED:
+        return (u_char*) &giMsgCnt;
+    case MSGQTOTALSEGMENTS:
+        return (u_char*) &(stMsgInfo.msgseg);
+    case MSGQTOTALHEADERS:
+        return (u_char*) &(stMsgInfo.msgtql);
+    default:
+      ERROR_MSG("");
+    }
+    return NULL;
 }
 
 /*****************************************************************************
