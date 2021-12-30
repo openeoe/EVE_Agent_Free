@@ -29,6 +29,30 @@ oid partitionTable_variables_oid[] = { 1,3,6,1,4,1,3204,1,3,23 };
 struct variable4 partitionTable_variables[] = {
 /*  magic number        , variable type , ro/rw , callback fn  , L, oidsuffix */
 
+#define PARTITIONINDEX		1
+{PARTITIONINDEX,  ASN_UNSIGNED,  RONLY,   var_partitionTable, 3,  { 1, 1, 1 }},
+#define PARTITIONXFERRATE		2
+{PARTITIONXFERRATE,  ASN_INTEGER,  RONLY,   var_partitionTable, 3,  { 1, 1, 2 }},
+#define PARTITIONDISKQUEUE		3
+{PARTITIONDISKQUEUE,  ASN_INTEGER,  RONLY,   var_partitionTable, 3,  { 1, 1, 3 }},
+#define PARTITIONTOTALIOKBS		4
+{PARTITIONTOTALIOKBS,  ASN_INTEGER,  RONLY,   var_partitionTable, 3,  { 1, 1, 4 }},
+#define PARTITIONTRANSFERS		5
+{PARTITIONTRANSFERS,  ASN_INTEGER,  RONLY,   var_partitionTable, 3,  { 1, 1, 5 }},
+#define PARTITIONTOTALIO		6
+{PARTITIONTOTALIO,  ASN_INTEGER,  RONLY,   var_partitionTable, 3,  { 1, 1, 6 }},
+#define PARTITIONBLOCKSREAD		7
+{PARTITIONBLOCKSREAD,  ASN_INTEGER,  RONLY,   var_partitionTable, 3,  { 1, 1, 7 }},
+#define PARTITIONBLOCKSWRITE		8
+{PARTITIONBLOCKSWRITE,  ASN_INTEGER,  RONLY,   var_partitionTable, 3,  { 1, 1, 8 }},
+#define PARTITIONACTIVETIME		9
+{PARTITIONACTIVETIME,  ASN_INTEGER,  RONLY,   var_partitionTable, 3,  { 1, 1, 9 }},
+#define PARTITIONRESPONSETIME		10
+{PARTITIONRESPONSETIME,  ASN_TIMETICKS,  RONLY,   var_partitionTable, 3,  { 1, 1, 10 }},
+#define PARTITIONTYPE		11
+{PARTITIONTYPE,  ASN_OCTET_STR,  RONLY,   var_partitionTable, 3,  { 1, 1, 11 }},
+#define PARTITIONNAME		12
+{PARTITIONNAME,  ASN_OCTET_STR,  RONLY,   var_partitionTable, 3,  { 1, 1, 12 }},
 };
 /*    (L = length of the oidsuffix) */
 
@@ -51,6 +75,10 @@ struct gstPartition{
 	unsigned long ulAveg;
 };
 
+/* Local function Declaration */
+void partitionTable_Init();
+int  partitionTable_GetNextPartition();
+
 /* Global variable Declaration */
 struct gstPartition *gpstPartitionFirst = NULL;
 struct gstPartition *gpstPartitionStat = NULL;
@@ -69,4 +97,202 @@ init_partitionTable(void)
                partitionTable_variables_oid);
 
     /* place any other initialization junk you need here */
+}
+
+int
+header_partitionTable(struct variable *vp, 
+                oid     *name, 
+                size_t  *length, 
+                int     exact, 
+                size_t  *var_len, 
+                WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+//    static unsigned char string[SPRINT_MAX_LEN];
+//    static oid objid[MAX_OID_LEN];
+//    static struct counter64 c64;
+
+  #define NAME_LENGTH    13
+    oid             newname[MAX_OID_LEN];
+    int             iPartitionIdx=0;
+    int             iLowIndex = -1;
+    int             iResult=0;
+
+    DEBUGMSGTL(("nuri/partitionTable", "header_partitionTable: "));
+    DEBUGMSGOID(("nuri/partitionTable", name, *length));
+    DEBUGMSG(("nuri/partitionTable", " %d\n", exact));
+
+    memcpy((char *) newname, (char *) vp->name, vp->namelen * sizeof(oid));
+    /*
+     * Find "next" Processor Entry
+     */
+
+    partitionTable_Init();
+    for (;;) {
+        iPartitionIdx = partitionTable_GetNextPartition();
+        if (iPartitionIdx == -1)
+            break;
+        newname[NAME_LENGTH] = iPartitionIdx;
+        iResult = snmp_oid_compare(name, *length, newname, vp->namelen + 1);
+        if (exact && (iResult == 0)) {
+            iLowIndex = iPartitionIdx;
+            break;
+        }
+        if ((!exact && (iResult < 0)) &&
+            (iLowIndex == -1 || iPartitionIdx < iLowIndex)) {
+            iLowIndex = iPartitionIdx;
+#ifdef PARTITION_MONOTONICALLY_INCREASING
+	    break;
+#endif
+        }
+    }
+
+    if (iLowIndex == -1) {
+        DEBUGMSGTL(("nuri/partitionTable", "... index out of range\n"));
+        return (MATCH_FAILED);
+    }
+
+    memcpy((char *) name, (char *) newname,
+
+    (vp->namelen + 1) * sizeof(oid));
+    *length = vp->namelen + 1;
+    *write_method = 0;
+    *var_len = sizeof(long);    /* default to 'long' results */
+
+    return iLowIndex;
+
+}
+
+/*
+ * var_partitionTable():
+ *   Handle this table separately from the scalar value case.
+ *   The workings of this are basically the same as for var_ above.
+ */
+unsigned char *
+var_partitionTable(struct variable *vp,
+    	    oid     *name,
+    	    size_t  *length,
+    	    int     exact,
+    	    size_t  *var_len,
+    	    WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+    static unsigned char string[SPRINT_MAX_LEN];
+    static oid objid[MAX_OID_LEN];
+    static struct counter64 c64;
+
+    static int iPartIdx;
+	static struct gstPartition stPartitionStat;
+
+    /* 
+   * This assumes that the table is a 'simple' table.
+   *	See the implementation documentation for the meaning of this.
+   *	You will need to provide the correct value for the TABLE_SIZE parameter
+   *
+   * If this table does not meet the requirements for a simple table,
+   *	you will need to provide the replacement code yourself.
+   *	Mib2c is not smart enough to write this for you.
+   *    Again, see the implementation documentation for what is required.
+   */
+   
+    iPartIdx = header_partitionTable(vp,name,length,exact,var_len,write_method);
+                                                
+    if(iPartIdx == MATCH_FAILED )
+    {
+		free(gpstPartitionFirst);
+                gpstPartitionFirst = NULL;
+		return NULL;
+    }
+ 	
+    memcpy(&stPartitionStat, gpstPartitionStat, sizeof(struct gstPartition));
+    free(gpstPartitionFirst);
+    gpstPartitionFirst = NULL;
+	*var_len = sizeof(unsigned long);
+    /* 
+   * this is where we do the value assignments for the mib results.
+   */
+    switch(vp->magic) {
+    case PARTITIONINDEX:
+        return (u_char*) &iPartIdx;
+#if 0 
+    case PARTITIONXFERRATE:
+        VAR = VALUE;	/* XXX */
+        return (u_char*) &VAR;
+     case PARTITIONDISKQUEUE:
+        VAR = VALUE;	/* XXX */
+        return (u_char*) &VAR;
+     case PARTITIONTOTALIOKBS:
+        VAR = VALUE;	/* XXX */
+        return (u_char*) &VAR;
+     case PARTITIONTRANSFERS:
+        VAR = VALUE;	/* XXX */
+        return (u_char*) &VAR;
+#endif
+     case PARTITIONTOTALIO:
+        ulong_ret = stPartitionStat.ulRIO + stPartitionStat.ulWIO;
+	return (u_char*) &ulong_ret;
+#if 0
+     case PARTITIONBLOCKSREAD:
+        VAR = VALUE;	/* XXX */
+        return (u_char*) &VAR;
+     case PARTITIONBLOCKSWRITE:
+        VAR = VALUE;	/* XXX */
+        return (u_char*) &VAR;
+     case PARTITIONACTIVETIME:
+        VAR = VALUE;	/* XXX */
+        return (u_char*) &VAR;
+     case PARTITIONRESPONSETIME:
+        VAR = VALUE;	/* XXX */
+        return (u_char*) &VAR;
+     case PARTITIONTYPE:
+        VAR = VALUE;	/* XXX */
+        return (u_char*) &VAR;
+#endif
+     case PARTITIONNAME:
+        strcpy(string, stPartitionStat.szName);
+		*var_len = strlen(string);
+        return (u_char*) string;
+    default:
+      ERROR_MSG("");
+    }
+    return NULL;
+}
+
+/*****************************************************************************
+ * name             :   partitionTable_Init
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   void
+ * global variables :   giPartitionIdx
+ * calls            :   partitionTable_GetPartition
+ *****************************************************************************/
+void 
+partitionTable_Init(){
+  	giPartitionIdx = 1;
+}
+
+/*****************************************************************************
+ * name             :   partitionTable_GetNextPartition
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   int
+ * global variables :   giPartitionIdx
+ * calls            :   void
+ *****************************************************************************/
+int 
+partitionTable_GetNextPartition(){
+    if(giPartitionIdx <= giPartitionCnt){
+	gpstPartitionStat = &gpstPartitionFirst[giPartitionIdx - 1];
+        return giPartitionIdx++;
+    }  
+    else{
+	gpstPartitionStat = NULL;
+        return -1;
+    }
 }
