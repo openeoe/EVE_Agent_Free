@@ -178,6 +178,7 @@ void System_GetCpuStat(u_long *ulCUser, u_long *ulCNice,
 		       u_long *ulCSys, u_long *ulCIdle);
 
 int System_CountUsers();
+u_long System_GetBufferCacheSize();
 u_long System_GetProcMryUsed();
 
 /* Global variable Declaration */
@@ -325,7 +326,7 @@ var_System(struct variable *vp,
         ulong_ret = 0;	
 	return (u_char*) &ulong_ret;
     case SYSBUFFERCACHESIZE:
-        ulong_ret = 0;
+        ulong_ret = System_GetBufferCacheSize();
     	return (u_char*) &ulong_ret;
     case SYSMESSAGE:
         ulong_ret = 0;	
@@ -681,6 +682,42 @@ System_CountUsers(){
     }
     endutent();
     return itotal;
+}
+
+/******************************************************************************
+ * name             :   System_GetBufferCacheSize
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   unsigned long
+ * global variables :   None
+ * calls            :   void
+ *****************************************************************************/
+u_long 
+System_GetBufferCacheSize()
+{
+	FILE *fpProc = NULL;
+	char szBuff[80];
+	u_long ulBufferCache=0;
+
+	if (fpProc != NULL)
+	    fclose(fpProc);
+	fpProc = fopen("/proc/meminfo", "r");
+   	if (fpProc){
+       	    memset(szBuff, '\0', 80);
+            while(fgets(szBuff, 80, fpProc) != NULL){
+		if(!strncmp(szBuff, "Buffers:", 8)){
+	            sscanf(szBuff + 9, "%lu", &ulBufferCache);
+		        break;
+		}
+       	        memset(szBuff, '\0', 80);
+	    }
+	    fclose(fpProc);
+	}
+	else{
+		snmp_log(LOG_ERR, "/proc/meminfo open error\n");
+	}
+	return ulBufferCache;
 }
 
 /*****************************************************************************
