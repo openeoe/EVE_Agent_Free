@@ -174,6 +174,8 @@ struct variable4 System_variables[] = {
 void System_GetProcStat(u_long*, u_long*, u_long*, u_long*, 
 			u_long*, u_long*, u_long*, u_long*, u_long*);
 
+void System_GetCpuStat(u_long *ulCUser, u_long *ulCNice, 
+		       u_long *ulCSys, u_long *ulCIdle);
 /* Global variable Declaration */
 static struct timeval gstDCTimeVal={0};
 unsigned char gString[SPRINT_MAX_LEN];
@@ -256,6 +258,9 @@ var_System(struct variable *vp,
 		             &ulIOWrite,  &ulBlkWrite);
 
         sysinfo(&stSysInfo);    
+        
+        System_GetCpuStat(&ulCpuUser, &ulCpuNice, &ulCpuSys, &ulCpuIdle);
+        ulCpuUser += ulCpuNice;
     }
     
     ulCpuTotal = ulCpuUser + ulCpuSys + ulCpuIdle;
@@ -588,4 +593,90 @@ System_GetProcStat(u_long *ulPIn,   u_long *ulPOut,
       }
 }
 
+/*****************************************************************************
+ * name             :   System_GetCpuStat
+ * description      :
+ * input parameters :   None 
+ * output parameters:   ulCUser, ulCNice, ulCSys, ulIdle
+ * return type      :   void
+ * global variables :   oldTime 
+ * calls            :   void
+ *****************************************************************************/
+void System_GetCpuStat(u_long *ulCUser, u_long *ulCNice, 
+		       u_long *ulCSys, u_long *ulCIdle){
+        FILE *fpStat = NULL;
+        static char     szBuff[80];
+        long newTime=0;
+ 	long timeDiff=0;
+        long long int ulXUser, ulXSys, ulXNice, ulXIdle;
+        long long int ulUser, ulSys, ulNice, ulIdle;
+
+	if(oldTime==0) {
+            oldTime = time(NULL);
+        }
+        else{
+            newTime = time(NULL);
+            timeDiff = newTime - oldTime;
+
+            if(timeDiff<CACHE_TIMEOUT){
+	            return;
+            }else{
+                   oldTime = newTime;;
+            }
+        }
+
+        *ulCUser = *ulCSys =  *ulCNice =  *ulCIdle = 0;
+        ulXUser = ulXSys =  ulXNice =  ulXIdle = 0;
+        ulUser = ulSys =  ulNice =  ulIdle = 0;
+
+        if(fpStat != NULL)
+            fclose(fpStat);
+        fpStat = fopen(STAT_FILE, "r");
+        if(fpStat != NULL){
+            memset(szBuff, '\0', 80);
+            while(fgets(szBuff, 80, fpStat) != NULL){
+                if(!strncmp(szBuff, "cpu ", 4)){
+                        sscanf(szBuff, "cpu %Ld %Ld %Ld %Ld ",
+                            &ulXUser,
+                            &ulXNice,
+                            &ulXSys,
+                            &ulXIdle);
+			break;
+                }
+            	memset(szBuff, '\0', 80);
+            }
+            if(fpStat)
+                fclose(fpStat);
+        }
+  	else{
+                DEBUGMSGTL(("System", "stat open error"));
+        }
+
+/* sleep for 1 sec */
+        sleep(1);
+        fpStat = fopen(STAT_FILE, "r");
+        if(fpStat != NULL){
+            memset(szBuff, '\0', 80);
+            while(fgets(szBuff, 80, fpStat) != NULL){
+                if(!strncmp(szBuff, "cpu ", 4)){
+                        sscanf(szBuff, "cpu %Ld %Ld %Ld %Ld ",
+                            &ulUser,
+                            &ulNice,
+                            &ulSys,
+                            &ulIdle);
+                        *ulCUser = (long)(ulUser - ulXUser);
+                        *ulCNice = (long)(ulNice - ulXNice);
+                        *ulCSys  = (long)(ulSys -  ulXSys);
+                        *ulCIdle = (long)(ulIdle - ulXIdle);
+			break;
+                }
+                memset(szBuff, '\0', 80);
+            }
+            if(fpStat)
+                fclose(fpStat);
+        }
+        else{
+                DEBUGMSGTL(("System", "/proc/stat open error"));
+	}
+}
 
