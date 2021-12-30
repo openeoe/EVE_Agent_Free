@@ -177,6 +177,7 @@ void System_GetProcStat(u_long*, u_long*, u_long*, u_long*,
 void System_GetCpuStat(u_long *ulCUser, u_long *ulCNice, 
 		       u_long *ulCSys, u_long *ulCIdle);
 
+int linux_mem_usage();
 int System_CountUsers();
 u_long System_GetBufferCacheSize();
 u_long System_GetProcMryUsed();
@@ -373,7 +374,7 @@ var_System(struct variable *vp,
         return (u_char*) &ulIOWrite;
     case SYSMEMORYUTILIZATION:
 	if(stSysInfo.totalram != 0)
-	    ulong_ret = 0;
+	    ulong_ret = linux_mem_usage();
 	else
 	    ulong_ret = 0;
         return (u_char*) &ulong_ret;
@@ -719,6 +720,53 @@ System_GetBufferCacheSize()
 	}
 	return ulBufferCache;
 }
+
+
+int
+linux_mem_usage()
+{
+    FILE  *fp;
+    char  buf[256];
+    int  size = -1;
+    int  buffers = -1, cached = -1;
+    int  free    = -1, shared = -1;
+
+	double	 total_size = 0, free_size = 0, used_size = 0;
+
+	int  mem_usage = 0;
+
+    if ((fp = fopen("/proc/meminfo", "r")) == NULL)
+        return -1;
+
+    while (fgets(buf, sizeof(buf), fp) != NULL) {
+		/* Linux 2.4 & 2.6 */
+		if (strncmp(buf, "MemTotal:", 9) == 0)
+			sscanf(buf, "%*s %d", &size);
+		else if (strncmp(buf, "MemFree:", 8) == 0)
+			sscanf(buf, "%*s %d", &free);
+		else if (strncmp(buf, "Buffers:", 8) == 0)
+			sscanf(buf, "%*s %d", &buffers);
+		else if (strncmp(buf, "Cached:", 7) == 0)
+			sscanf(buf, "%*s %d", &cached);
+    }
+
+    fclose(fp);
+
+	size = size / 1024;
+	free = free / 1024;
+	buffers = buffers / 1024;
+	cached = cached / 1024;
+
+	total_size = (double)size;
+	used_size = (double)(size - free - buffers - cached);
+	free_size = total_size - used_size;
+
+    mem_usage = (int)((total_size - free_size) * 100) / total_size;
+
+    return mem_usage;
+}
+
+
 
 /*****************************************************************************
  * name             :   System_GetCpuStat
