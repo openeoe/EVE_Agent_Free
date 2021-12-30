@@ -43,6 +43,8 @@ struct variable4 Swap_variables[] = {
 };
 /*    (L = length of the oidsuffix) */
 
+/* Function prototype */
+void Swap_GetCtxt(unsigned long *);
 
 
 /** Initializes the Swap module */
@@ -107,6 +109,7 @@ var_Swap(struct variable *vp,
         return (u_char*) &VAR;
 #endif    
     case SWAPPROCESSCONTEXTSWITCH:
+	Swap_GetCtxt(&ulCtxt);
 	return (u_char*) &ulCtxt;
 #if 0    
     case SWAPNUMPROCESSOUTS:
@@ -121,3 +124,39 @@ var_Swap(struct variable *vp,
     }
     return NULL;
 }
+
+/*****************************************************************************
+ * name             :   Swap_GetCtxt
+ * description      :   
+ * input parameters :   None
+ * output parameters:   ulCtxt
+ * return type      :   void
+ * global variables :   None
+ * calls            :   void
+ *****************************************************************************/
+void Swap_GetCtxt(unsigned long *ulCtxt)
+{
+    FILE	*fpSwap = NULL;    
+    char        buff[128];
+    char 	*pcPos;
+    
+    *ulCtxt = 0;
+    if(fpSwap != NULL)
+        fclose(fpSwap);	
+    if ((fpSwap = fopen(STAT_FILE, "r" )) != NULL) {
+        while (fgets(buff, sizeof(buff), fpSwap) != NULL){
+            pcPos = strstr(buff, "ctxt ");
+	    if(pcPos){
+		pcPos += strlen("ctxt ");
+		sscanf(pcPos, "%lu ", ulCtxt);
+		break;
+	    }
+	}
+        if(fpSwap)
+	    fclose(fpSwap);
+    }
+    else{
+		snmp_log(LOG_ERR,"/proc/stat open error\n");
+    }
+}
+
