@@ -1,0 +1,41 @@
+INCPATH=../inc/
+RM=rm
+SCHEDPATH=../../../../Nuri/Project/Development/Common/	
+CC=gcc
+X_AM_L=
+CFLAGS=-I../inc/ -I$(SCHEDPATH) -w -g -c -D_DEBUG  
+#FLAGS=-L/usr/local/lib -lnetsnmp -lnetsnmpagent -lnetsnmphelpers -lnetsnmpmibs -lnsl -lperfstat -lpthread -llvm -lcfg -lodm -lpcap -lNASC_FTP
+FLAGS=-L/usr/local/lib -lnetsnmp -lnetsnmpagent -lnetsnmphelpers -lnetsnmpmibs -lnsl -lpthread -llvm -lcfg -lodm -lpcap -lNASC_FTP
+
+BINPATH=../src/
+
+
+OBJS=NASCenter_AM_applicationmetering.o \
+  NASCenter_AM_TrapProcess.o \
+  NASCenter_Utils.o \
+  NASCenter_AM_logstatus.o
+	
+HEADERS=$(INCPATH)NASCenter_AlertMessage.h $(INCPATH)NASCenter_AM_applicationmetering.h $(INCPATH)appMeteringTable.h $(INCPATH)AgentInfo.h $(SCHEDPATH)NASCenter_Errors.h $(SCHEDPATH)ctypes.h $(SCHEDPATH)NASCenter_FileTrans.h $(SCHEDPATH)NASCenter_Common.h 
+
+AM_Aix	:	$(OBJS)
+	$(CC)  $(X_AM_L) $(OBJS)  -o   $(BINPATH)AM_Aix $(FLAGS) 
+
+
+NASCenter_AM_applicationmetering.o	:	NASCenter_AM_applicationmetering.c 
+		$(CC)  $(CFLAGS)  $(X_AM_L) NASCenter_AM_applicationmetering.c  
+
+NASCenter_AM_TrapProcess.o	:	NASCenter_AM_TrapProcess.c 
+		$(CC)  $(CFLAGS)  $(X_AM_L) NASCenter_AM_TrapProcess.c  
+
+NASCenter_Utils.o	:	NASCenter_Utils.c 
+		$(CC)  $(CFLAGS)  $(X_AM_L) NASCenter_Utils.c 
+
+NASCenter_AM_logstatus.o	:	 NASCenter_AM_logstatus.c 
+	$(CC) $(CFLAGS)  $(X_AM_L) NASCenter_AM_logstatus.c
+
+clean	:	
+		$(RM) -rf  NASCenter_AM_TrapProcess.o
+		$(RM) -rf  NASCenter_Utils.o 
+		$(RM) -rf  NASCenter_AM_applicationmetering.o  
+		$(RM) -rf  NASCenter_AM_logstatus.o
+		$(RM) -rf  AM_Aix

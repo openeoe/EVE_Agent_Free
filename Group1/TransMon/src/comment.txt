@@ -1,0 +1,19 @@
+# 2005.08.31. by HJ.Kwon.
+
+ TransactionTable for Windows version has been eliminated from NASCenterAgent.
+ Therefore it doesn't need linking winpcap library to compile anymore, 
+ also you don't have to installing WinPcap program to install NASCenterAgent.
+
+ If you want to put transactionTable module in NASCenterAgent, 
+ you have to change compile option on snmpd project setting on VC++.
+
+Steps.
+
+choose Link tab.
+Object/library modules: 
+include wpcap.lib
+(netsnmpagent.lib netsnmpmibs.lib netsnmphelpers.lib libsnmp.lib msvcrt.lib Advapi32.lib advapi32.lib shlwapi.lib wsock32.lib kernel32.lib user32.lib oldnames.lib Iphlpapi.lib psapi.lib pdh.lib mpr.lib winspool.lib netapi32.lib msi.lib Ws2_32.lib pthreadVSE.lib libNASC_FTP.lib wpcap.lib ole32.lib)
+
+Project Options:
+include /libpath:"..\..\..\TransMon\winpcap\lib" 
+(netsnmpagent.lib netsnmpmibs.lib netsnmphelpers.lib libsnmp.lib msvcrt.lib Advapi32.lib advapi32.lib shlwapi.lib wsock32.lib kernel32.lib user32.lib oldnames.lib Iphlpapi.lib psapi.lib pdh.lib mpr.lib winspool.lib netapi32.lib msi.lib Ws2_32.lib pthreadVSE.lib libNASC_FTP.lib wpcap.lib ole32.lib /nologo /subsystem:console /incremental:no /pdb:"Release/NASCenterAgent.pdb" /machine:I386 /nodefaultlib /out:"../bin/NASCenterAgent.exe" /libpath:"..\lib" /libpath:"..\..\..\TransMon\winpcap\lib" /libpath:"..\..\..\..\common" /LARGEADDRESSAWARE)

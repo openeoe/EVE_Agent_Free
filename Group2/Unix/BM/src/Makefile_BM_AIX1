@@ -1,0 +1,37 @@
+INCPATH=../inc/
+CC=/usr/local/bin/gcc
+SCHED_PATH=../../../../Nuri/Project/Development/Common/
+
+CFLAGS= -I$(INCPATH)  -I$(SCHED_PATH) -Wall -g -c -DSCH_DEBUG -DBM_DEBUG -DBM_PRINT
+
+FLAGS=-L /usr/local/lib -lnetsnmp -lnetsnmpagent -lnetsnmphelpers -lnetsnmpmibs 
+
+FTP= /usr/local/lib/libNASC_FTP.a
+
+BINPATH=../src/
+
+
+OBJS=NASCenter_BM_List.o\
+  NASCenter_BM.o\
+  NASCenter_Scheduler.o
+	
+HEADERS=$(INCPATH)NASCenter_BM.h $(INCPATH)NASCenter_BM_List.h $(SCHED_PATH)ctypes.h $(SCHED_PATH)NASCenter_Errors.h $(INCPATH)backupMasterTable.h $(INCPATH)backupDetailTable.h $(SCHED_PATH)NASCenter_Scheduler.h $(INCPATH)NASCenter_FileTrans.h $(SCHED_PATH)NASCenter_Common.h
+
+BACKUP	:	$(OBJS)
+	$(CC)  $(OBJS)  -o   $(BINPATH)BackupAIX -lpthread $(FLAGS) $(FTP)
+
+
+NASCenter_BM_List.o	:	NASCenter_BM_List.c $(HEADERS)
+		$(CC)  $(CFLAGS) NASCenter_BM_List.c  
+
+NASCenter_BM.o	:	NASCenter_BM.c $(HEADERS)
+		$(CC)  $(CFLAGS) NASCenter_BM.c  
+
+NASCenter_Scheduler.o	:	$(SCHED_PATH)NASCenter_Scheduler.c $(HEADERS)
+		$(CC)  $(CFLAGS)  $(SCHED_PATH)NASCenter_Scheduler.c  
+
+clean	:	
+		$(RM)  NASCenter_BM.o err
+		$(RM)  NASCenter_BM_List.o 
+		$(RM)  NASCenter_Scheduler.o 
+		$(RM)  BackupAIX

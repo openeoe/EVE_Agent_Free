@@ -1,0 +1,31 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: FileTransfer - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\Users\박세영\AppData\Local\Temp\RSP422D.tmp" with contents
+[
+/nologo /MLd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /Fp"Debug/FileTransfer.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\Users\박세영\Desktop\windowAgent\Group2\Unix\common\src\NASCenter_FileTrans.c"
+"C:\Users\박세영\Desktop\windowAgent\Group2\Unix\common\src\NASCenter_FileTrans_Recv_Util.c"
+]
+Creating command line "cl.exe @"C:\Users\박세영\AppData\Local\Temp\RSP422D.tmp"" 
+Creating command line "link.exe -lib /nologo /out:"..\..\..\..\Common\libNASC_FTP.lib"  ".\Debug\NASCenter_FileTrans.obj" ".\Debug\NASCenter_FileTrans_Recv_Util.obj" ".\Debug\NASCenter_FileTrans_Send_Util.obj" "
+<h3>Output Window</h3>
+Compiling...
+NASCenter_FileTrans.c
+c:\users\박세영\desktop\windowagent\group2\unix\common\src\nascenter_filetrans.c(92) : fatal error C1083: Cannot open include file: 'NASCenter_FileTrans_Util.h': No such file or directory
+NASCenter_FileTrans_Recv_Util.c
+c:\users\박세영\desktop\windowagent\group2\unix\common\src\nascenter_filetrans_recv_util.c(94) : fatal error C1083: Cannot open include file: 'pthread.h': No such file or directory
+Error executing cl.exe.
+
+
+
+<h3>Results</h3>
+libNASC_FTP.lib - 2 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

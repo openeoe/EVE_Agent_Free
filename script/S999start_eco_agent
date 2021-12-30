@@ -1,0 +1,71 @@
+#!/bin/sh
+
+############################################################################
+#                         SmartECOAgent Start Script                       #
+############################################################################
+
+PATH=/bin:/sbin:/usr/sbin:/usr/bin
+export PATH
+
+
+StopSnmpProcess()
+{
+ 	pid=`ps -e | grep snmp | awk '{print $1}'`
+
+        if [ "X$pid" != "X" ]; then
+                if kill -9 $pid; then
+                        echo "snmpdm stopped"
+                else
+                        set_return
+                        echo "Unable to stop snmp"
+                fi
+        fi
+
+ 	pid=`ps -e | grep harmoni | awk '{print $1}'`
+
+        if [ "X$pid" != "X" ]; then
+                if kill -9 $pid; then
+                        echo "harmoni stopped"
+                else
+                        set_return
+                        echo "Unable to stop snmp"
+                fi
+        fi
+
+ 	pid=`ps -e | grep ocagent | awk '{print $1}'`
+
+        if [ "X$pid" != "X" ]; then
+                if kill -9 $pid; then
+                        echo "harmoni stopped"
+                else
+                        set_return
+                        echo "Unable to stop snmp"
+                fi
+        fi
+}
+
+StartSmartECOAgent()
+{
+	/usr/local/sbin/start_agent.sh
+}
+
+StopSmartECOAgent()
+{
+	/usr/local/sbin/end_agent.sh
+}
+
+#########################################
+#         Main Program                  #
+#########################################
+case "$1" in
+	start )
+#		StopSnmpProcess
+		StartSmartECOAgent
+	;;
+	stop )
+		StopSmartECOAgent
+	;;
+	* )
+	echo "Usage: $0 (start | stop)"
+		exit 1
+esac

@@ -1,0 +1,18 @@
+CC= /usr/bin/gcc
+#LIBS= -lnetsnmp -lnetsnmpagent -lnetsnmphelpers -lnetsnmpmibs -lrpm -lrpmio \
+#	-lrpmdb -lpopt -lxml -lssl -lpthread -lpcap -lNASC_FTP 
+LIBS= -lnetsnmp -lnetsnmpagent -lnetsnmphelpers -lnetsnmpmibs \
+	 -lxml -lpthread -lpcap -lNASC_FTP 
+INCLUDEDIRS= -I inc -I /usr/include/gnome-xml
+LIBOPT=
+BIN= /usr/local/sbin/NASCenterMA
+
+MADEPS= src/NASCenter_MA.c src/NASCenter_MA_Fw.c src/NASCenter_MA_Set.c \
+	src/NASCenter_Util_List.c inc/NASCenter_MA.h inc/NASCenter_Util_List.h
+
+masterAgent:	$(MADEPS)
+		$(CC)  $(LIBS) $(INCLUDEDIRS) src/NASCenter_MA.c \
+			src/NASCenter_Util_List.c src/NASCenter_MA_Set.c \
+			src/NASCenter_MA_Fw.c -o $(BIN)
+clean:
+	rm $(BIN)

@@ -1,0 +1,30 @@
+INCPATH=../inc/
+CC=/usr/local/bin/gcc
+RM=/usr/bin/rm
+X_D_FL=
+CFLAGS= -I../inc/  -Wall -g -c  
+FLAGS=-L /usr/local/lib  -lnetsnmp -lnetsnmpagent -lnetsnmphelpers -lnetsnmpmibs
+
+BINPATH=../src/
+
+
+OBJS=NASCenter_UM_List.o\
+  NASCenter_UM_Firewall.o
+	
+HEADERS=$(INCPATH)NASCenter_UM_Firewall.h $(INCPATH)NASCenter_UM_List.h $(INCPATH)ctypes.h $(INCPATH)NASCenter_Errors.h $(INCPATH)allowFTPTable.h $(INCPATH)allowPOP3Table.h $(INCPATH)allowSMTPTable.h  $(INCPATH)allowTelnetTable.h
+
+
+FIREWALL:	$(OBJS)
+	$(CC)  $(OBJS)  -o   $(BINPATH)firewall -lpthread $(FLAGS)
+
+
+NASCenter_UM_IBM_List.o	:	NASCenter_UM_List.c $(HEADERS)
+		$(CC)  $(X_D_FL) $(CFLAGS) NASCenter_UM_List.c  
+
+NASCenter_UM_IBM_Firewall.o	:	NASCenter_UM_Firewall.c $(HEADERS)
+		$(CC)  $(X_D_FL) $(CFLAGS) NASCenter_UM_Firewall.c  
+
+
+clean	:	
+		$(RM) -rf  *.o 
+		$(RM) -rf  firewall

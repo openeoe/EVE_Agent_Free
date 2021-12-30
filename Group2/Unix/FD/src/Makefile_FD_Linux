@@ -1,0 +1,44 @@
+INCPATH=../inc/
+CC=/usr/bin/gcc -g
+RM=rm
+X_FD_L=
+SCHED_PATH=../../../../Nuri/Project/Development/Common/
+CFLAGS= -I../inc/ -I$(SCHED_PATH) -Wall -g -c
+#FLAGS=-L /usr/local/lib -lnetsnmp -lnetsnmpagent -lnetsnmphelpers -lnetsnmpmibs -lrpmio -lrpmdb -lrpmbuild -lpopt -lxml -lssl -lrpm -lpcap
+FLAGS=-L /usr/local/lib -lnetsnmp -lnetsnmpagent -lnetsnmphelpers -lnetsnmpmibs -lxml -lpcap
+
+FTP= /usr/local/lib/libNASC_FTP.a
+
+BINPATH=../src/
+
+
+OBJS=NASCenter_FD_FileDistribution.o\
+NASCenter_FD_logstatus.o\
+NASCenter_Scheduler.o\
+NASCenter_Utils.o
+	
+HEADERS=$(INCPATH)NASCenter_FD_FileDistribution.h $(SCHED_PATH)ctypes.h $(SCHED_PATH)NASCenter_Errors.h $(SCHED_PATH)NASCenter_Scheduler.h $(INCPATH)NASCenter_FileTrans.h
+
+FD	:	$(OBJS)
+	$(CC)  $(OBJS)  -o   $(BINPATH)FD_Linux -lpthread $(FLAGS) $(FTP)
+
+
+NASCenter_Utils.o	:	NASCenter_Utils.c $(HEADERS)
+		$(CC)  $(CFLAGS) $(X_FD_L) NASCenter_Utils.c  
+
+NASCenter_FD_FileDistribution.o	:	NASCenter_FD_FileDistribution.c $(HEADERS)
+		$(CC)  $(CFLAGS) $(X_FD_L) NASCenter_FD_FileDistribution.c  
+
+NASCenter_Scheduler.o   :       $(SCHED_PATH)NASCenter_Scheduler.c $(HEADERS)
+		$(CC)  $(CFLAGS) $(SCHED_PATH)NASCenter_Scheduler.c  
+
+NASCenter_FD_logstatus.o	:	NASCenter_FD_logstatus.c $(HEADERS)
+		$(CC)  $(CFLAGS) $(X_FD_L) NASCenter_FD_logstatus.c  
+
+clean	:	
+		$(RM) -rf NASCenter_FD_FileDistribution.o err
+		$(RM) -rf NASCenter_Scheduler.o
+		$(RM) -rf NASCenter_FD_logstatus.o 
+		$(RM) -rf NASCenter_Utils.o 
+		$(RM) -rf FD_Linux
+

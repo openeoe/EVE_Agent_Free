@@ -1,0 +1,40 @@
+INCPATH=../inc/
+CC=gcc
+SCHED_PATH=../../../../Nuri/Project/Development/Common/
+
+CFLAGS= -I../inc/ -I$(SCHED_PATH) -Wall -g -c -D__INTEL_COMPILER -D_REENTRANT -DTRU64_JS -DOPEN_SSL
+
+X_D_FL=
+
+#FLAGS=-L/usr/local/lib/ -lnetsnmp -lnetsnmpagent -lnetsnmphelpers -lnetsnmpmibs  -lssl -lcrypto -lpcap
+FLAGS=-L/usr/local/lib/ -lnetsnmp -lnetsnmpagent -lnetsnmphelpers -lnetsnmpmibs  -lpcap
+
+FTP= /usr/local/lib/libNASC_FTP.a
+
+BINPATH=../src/
+
+
+OBJS=NASCenter_JS_List.o\
+  NASCenter_JS.o\
+  NASCenter_Scheduler.o
+
+HEADERS=$(INCPATH)NASCenter_JS.h $(INCPATH)NASCenter_JS_List.h $(SCHED_PATH)ctypes.h $(SCHED_PATH)NASCenter_Errors.h $(INCPATH)jobProcessMasterTable.h $(INCPATH)JobProcessDetailTable.h $(SCHED_PATH)NASCenter_Scheduler.h $(INCPATH)NASCenter_FileTrans.h $(SCHED_PATH)NASCenter_Common.h
+
+JOBSCHED	:	$(OBJS)
+	$(CC)  $(OBJS)  -o   $(BINPATH)JobScheduleTRU64 -lpthread $(FLAGS) $(FTP)
+
+
+NASCenter_JS_List.o	:	NASCenter_JS_List.c $(HEADERS) 
+		$(CC)  $(CFLAGS) $(X_D_FL) NASCenter_JS_List.c 
+
+NASCenter_JS.o	:	NASCenter_JS.c $(HEADERS)
+		$(CC)  $(CFLAGS) $(X_D_FL) NASCenter_JS.c  
+
+NASCenter_Scheduler.o	:	$(SCHED_PATH)NASCenter_Scheduler.c $(HEADERS)
+		$(CC)  $(CFLAGS) $(X_D_FL) $(SCHED_PATH)NASCenter_Scheduler.c  
+
+clean	:	
+		$(RM) -rf NASCenter_JS.o err
+		$(RM) -rf  NASCenter_JS_List.o 
+		$(RM) -rf  NASCenter_Scheduler.o 
+		$(RM) -rf  JobScheduleTRU64

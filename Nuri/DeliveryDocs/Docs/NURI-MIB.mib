@@ -1,0 +1,5875 @@
+NURI-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+              Integer32,IpAddress,Unsigned32 
+                  FROM SNMPv2-SMI
+              RowStatus,TimeInterval,DateAndTime,DisplayString,TEXTUAL-CONVENTION
+                  FROM SNMPv2-TC
+              enterprises
+                  FROM RFC1155-SMI;
+
+--  This MIB module uses the extended OBJECT-TYPE macro as
+--  defined in [14];
+
+
+-- textual conventions
+
+DisplayString ::= OCTET STRING
+-- This data type is used to model textual information taken
+-- from the NVT ASCII character set.  By convention, objects
+-- with this syntax are declared as having
+
+--
+--      SIZE (0..255)
+
+
+nuri OBJECT IDENTIFIER ::= { enterprises 3204 }
+nuri1 OBJECT IDENTIFIER ::= { nuri 1 }
+nuri3 OBJECT IDENTIFIER ::= { nuri1 3 }
+System OBJECT IDENTIFIER ::= { nuri3 20 }
+CPU OBJECT IDENTIFIER ::= { nuri3 21 }
+Disk OBJECT IDENTIFIER ::= { nuri3 22 }
+Partition OBJECT IDENTIFIER ::= { nuri3 23 }
+FileSystem OBJECT IDENTIFIER ::= { nuri3 24 }
+Network OBJECT IDENTIFIER ::= { nuri3 25 }
+Swap OBJECT IDENTIFIER ::= { nuri3 26 }
+SharedMemory OBJECT IDENTIFIER ::= { nuri3 27 }
+Semaphore OBJECT IDENTIFIER ::= { nuri3 28 }
+MessageQueue OBJECT IDENTIFIER ::= { nuri3 29 }
+netApplication OBJECT IDENTIFIER ::= { nuri3 30 }
+Transaction OBJECT IDENTIFIER ::= { nuri3 31 }
+PersonalComputer OBJECT IDENTIFIER ::= { nuri3 32 }
+Process OBJECT IDENTIFIER ::= { nuri3 33 }
+Configuration  OBJECT IDENTIFIER ::= { nuri3 34 }
+ jobProcess OBJECT IDENTIFIER ::= { Configuration  1 }
+backupManagement OBJECT IDENTIFIER ::= { Configuration  2 }
+userAccessControl OBJECT IDENTIFIER ::= { Configuration  4 }
+ snmp OBJECT IDENTIFIER ::= { Configuration  5 }
+Policy OBJECT IDENTIFIER ::= { nuri3 35 }
+ LogMon OBJECT IDENTIFIER ::= { Policy 2 }
+Agent OBJECT IDENTIFIER ::= { nuri3 36 }
+AgentInfo OBJECT IDENTIFIER ::= { Agent 1 }
+
+sysCPUIdleTime              OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Measure of unused CPU. Percent (%) of measurement interval that processor is idle. Normalized to a maximum of 100%. Seconds/Interval Cumulative number of seconds that processor is idle during last measurement interval."
+::= { System 1 }
+
+sysCPUUserTime              OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Measure of application-related CPU activity. % (default) Percent of measurement interval that processor spends in user state. Normalized to a maximum of 100%. Seconds/Interval Cumulative number of seconds that processor has spent in user state during last measurement interval. Sum of user time on all processors during last measurement interval. Seconds Cumulative number of seconds that processor has spent in user state, since system boot or last reset. Sum of user time on all processors since system boot or last reset."
+::= { System 2 }
+
+sysCPUSystemTime            OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Measure of system-related CPU activity. % (default) Percent of measurement interval that processor spends in system state. Normalized to a maximum of 100%.Seconds/Interval Cumulative number of seconds that processor has spent in system state during last measurement interval. Sum of system time on all processors during last measurement interval. Seconds Cumulative number of seconds that processor has spent in system state, since system boot or last reset. Sum of system time on all processors since system boot or last reset."
+::= { System 3 }
+
+sysCPUWaitTime              OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Percent of measurement interval that processor spends in an I/O wait state. Normalized to a maximum of 100%. Seconds/Interval Cumulative number of seconds that processor spends in an I/O wait state during last measurement interval. Sum of wait time on all processors during last measurement interval. Seconds Cumulative number of seconds that processor spends in an I/O wait state, since system boot or last reset. Sum of wait time on all processors since system boot or last reset."
+::= { System 4 }
+
+sysTotalPageFaults          OBJECT-TYPE
+   SYNTAX     Counter32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Overall measure of system paging. Faults/Interval Page faults system generated during last interval. Faults/Sec (default) Average page fault rate during last measurement interval. Faults Page faults system generated since initial boot."
+::= { System 5 }
+
+sysFreeMemorySize           OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Total free memory in system.KBytes/Interval Amount by which free memory changed during last measurement interval. Positive number indicates that more free memory is becoming available. Negative number indicates that free memory is being consumed.% Change Percent change in free memory during last measurement interval.KBytes/Sec Average rate at which free memory changed during last measurement interval. Positive number indicates that more free memory is becoming available. Negative number indicates that free memory is being consumed. KBytes (default) Total free memory in system."
+::= { System 6 }
+
+sysNumberIODone             OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Measure of system I/O load. Blocks/Interval I/O blocks (512 byte block) that system performed during last interval. Blocks/Sec (default) Average I/O rate during last measurement interval. Blocks I/O blocks system transferred since initial boot. Might include I/O blocks to remote nodes."
+::= { System 7 }
+
+sysPageIns    OBJECT-TYPE
+   SYNTAX     Counter
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Measure of I/O related to paging. Number of pages. Faults/Interval Paging-related disk read operations that system performed during last interval. Faults/Sec (default) Average rate of paging-related disk read operations during last measurement interval. Faults Cumulative paging-related disk read operations since boot time."
+::= { System 8 }
+
+sysPageOuts   OBJECT-TYPE
+   SYNTAX     Counter
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Measure of I/O related to paging. Number of pages. Faults/Interval Paging-related disk write operations that system performed during last interval. Faults/Sec (default) Average rate of paging-related disk write operations during last measurement interval. Faults Cumulative paging-related disk write operations since boot time."
+::= { System 9 }
+
+sysProcessNum OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Total Number of process being loaded.A snap measurement of count"
+::= { System 10 }
+
+sysUsersNum   OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Total number of users accessed to the server.A snap measurement of count"
+::= { System 11 }
+
+sysPgInsPaging              OBJECT-TYPE
+   SYNTAX     Counter
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Pages read from swap space. Pages/Interval Pages read from disk during last interval. Pages/Sec (default) Average number of pages read from disk per second. Pages Cumulative number of pages read from disk."
+::= { System 12 }
+
+sysPgOutsPaging             OBJECT-TYPE
+   SYNTAX     Counter
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Pages written to swap space. Pages/Interval Number of pages written to disk during last interval. Pages/Sec (default) Average number of pages written to disk per second. Pages Cumulative number of pages written to disk."
+::= { System 13 }
+
+sysTotalMemory              OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "System installed memory. KBytes/Interval Not meaningful for this metric. % Change Not meaningful for this metric. KBytes/Sec Not meaningful for this metric. KBytes (default) Total physical memory in system."
+::= { System 14 }
+
+sysMemoryUtilization        OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "System memory in use. %/Interval Amount by which memory utilization changed during last measurement interval. Negative number indicates more free memory is becoming available. Positive number indicates free memory is being consumed. % Change Percent change in memory utilization. %/Sec Average rate at which memory utilization changed during last measurement interval. Negative number indicates more free memory is becoming available. Positive number indicates free memory is being consumed. % (default) Percent of total physical memory currently in use."
+::= { System 15 }
+
+sysTotalVirtualMemory       OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Amount of total swap space allocated to system. Reported in KBytes. KBytes/Interval Not meaningful for this metric. % Change Not meaningful for this metric. KBytes/Sec Not meaningful for this metric. KBytes (default) Total virtual memory in system. Should always be same for a given system."
+::= { System 16 }
+
+sysFreeVirtualMemory        OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Amount of free swap space on system. Reported in KBytes. KBytes/Interval Amount by which free virtual memory changed during last measurement interval. Positive number indicates more free virtual memory is becoming available. Negative number indicates free virtual memory is being consumed. % Change Percent change in free virtual memory during last measurement interval. KBytes/Sec Average rate that free virtual memory changed during last measurement interval. Positive number indicates more free virtual memory is becoming available. Negative number indicates free virtual memory is being consumed. KBytes (default) Total free virtual memory in system."
+::= { System 17 }
+
+sysPagesScanned             OBJECT-TYPE
+   SYNTAX     Counter
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Pages scanned in memory. Reported in pages. Pages/Interval Pages examined by the pageout daemon during last interval. % Change Percent change in the number of pages examined by the pageout daemon. Pages/Sec Average number of pages per second examined by the pageout daemon during last measurement interval. Pages (default) Cumulative number of pages examined by the pageout daemon since boot time."
+::= { System 18 }
+
+sysBufferBlockReads         OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Transfer of data between system buffers and disk or other block devices. Blocks/Interval Buffer read blocks during interval. Blocks/Sec (default) Average transfer rate of data during system buffer read blocks. Blocks Cumulative number of buffer read blocks."
+::= { System 19 }
+
+sysBufferBlockWrites        OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Transfer of data between system buffers and disk or other devices. Blocks/Interval Buffer write blocks during interval. Blocks/Sec (default) Average transfer rate of data during system buffer writes. Blocks Cumulative number of buffer write blocks."
+::= { System 20 }
+
+sysLocalBufferReads         OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Logical reads to buffer cache in system. Blocks/Interval Logical reads during interval. Blocks/Sec (default) Average transfer rate for logical reads. Blocks Cumulative number of logical reads."
+::= { System 21 }
+
+sysLocalBufferWrites        OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Logical writes to buffer cache in system. Blocks/Interval Logical writes during interval. Blocks/Sec (default) Average transfer rate for logical writes. Blocks Cumulative number of logical writes."
+::= { System 22 }
+
+sysPhysicalReads            OBJECT-TYPE
+   SYNTAX     Counter
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Physical reads to disk or other devices in system. These are physical reads that represent RAW I/O. Blocks/Interval Physical reads during interval. Blocks/Sec (default) Average transfer rate for physical reads. Blocks Cumulative number of physical reads."
+::= { System 23 }
+
+sysPhysicalWrites           OBJECT-TYPE
+   SYNTAX     Counter
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Physical writes to disk or other devices in system. These are physical writes that represent RAW I/O. Blocks/Interval Physical writes during interval. Blocks/Sec (default) Average transfer rate for physical writes. Blocks Cumulative number of physical writes."
+::= { System 24 }
+
+sysBufferCacheSize          OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Represents the size of the buffer cache in kilobytes. In Unix systems, the kernel's buffer caches the mechanism through which most explicit disk I/O passes. In newer versions of Unix system, the Virtual Memory Manager primarily handles the explicit I/O. (Default: kilobytes)."
+::= { System 25 }
+
+sysFilesMemoryUsed          OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "The File System Memory used is a measurement of the amount of kernel memory currently being used to handle explicit I/O. (Default: kilo-bytes)."
+::= { System 26 }
+
+sysProcessMemoryUsed        OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "The Process Memory used is a measurement of the amount of process memory currently being used to by the processes running on the system. (Default: kilobytes)."
+::= { System 27 }
+
+sysMessage    OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "The total number of message operations reported by the system. (Default: operations/sec)."
+::= { System 28 }
+
+sysSemaphore  OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "The total number of semaphore operations reported by the system. (Default: operations/sec)."
+::= { System 29 }
+
+
+sysCPUAverage OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "The Average of Usages for all Processors in the System."
+::= { System 30 }
+
+
+sysStatisticsTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF SysStatisticsEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { System 31 }
+
+sysStatisticsEntry OBJECT-TYPE
+              SYNTAX SysStatisticsEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { sysStatisticsIndex }
+              ::= { sysStatisticsTable 1 }
+
+SysStatisticsEntry ::=
+SEQUENCE {
+              sysStatisticsIndex
+              Unsigned32,
+              sysStatisticsVariable
+              DisplayString,
+              sysStatisticsPeriod
+              INTEGER,
+              sysStatisticsMaxValue
+              Integer32,
+              sysStatisticsMinValue
+              Integer32,
+              sysStatisticsAvgValue
+              Integer32,
+              sysStatisticsStd
+              Integer32
+}
+
+sysStatisticsIndex          OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { sysStatisticsEntry 1 }
+
+sysStatisticsVariable       OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "string containing name of mib variable( monitorPriorityVariable )."
+::= { sysStatisticsEntry 2 }
+
+sysStatisticsPeriod         OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the period in second. This value used to calculate the value of average, MAX, MIN and declination."
+::= { sysStatisticsEntry 3 }
+
+sysStatisticsMaxValue       OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "max value of variable."
+::= { sysStatisticsEntry 4 }
+
+sysStatisticsMinValue       OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "minimum value of variable."
+::= { sysStatisticsEntry 5 }
+
+sysStatisticsAvgValue       OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "average value of variable."
+::= { sysStatisticsEntry 6 }
+
+sysStatisticsStd            OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "standard declination value of variable."
+::= { sysStatisticsEntry 7 }
+
+cpuTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF CpuEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { CPU 1 }
+
+cpuEntry OBJECT-TYPE
+              SYNTAX CpuEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { cpuId }
+              ::= { cpuTable 1 }
+
+CpuEntry ::=
+SEQUENCE {
+              cpuId
+              Unsigned32,
+              cpuUtilization
+              INTEGER,
+              cpuIdleTime
+              INTEGER,
+              cpuUserTime
+              INTEGER,
+              cpuSystemTime
+              INTEGER,
+              cpuWaitTime
+              INTEGER,
+			  cpuRunQ
+			  INTEGER
+}
+
+cpuId         OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "ID of processor."
+::= { cpuEntry 1 }
+
+cpuUtilization              OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Measure of processor load. % (default) Percent of measurement interval processor spends in either system or user state. Seconds/Interval Cumulative number of seconds processor spent in either system or user state during last measurement interval. Seconds Cumulative number of seconds processor has spent in either system or user state, since system boot or last reset."
+::= { cpuEntry 2 }
+
+cpuIdleTime   OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Measure of unused CPU time. % (default) Percent of measurement interval processor is idle. Seconds/Interval Cumulative number of seconds processor is idle during last measurement interval. Seconds Cumulative number of seconds processor is idle, since system boot or last reset."
+::= { cpuEntry 3 }
+
+cpuUserTime   OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Measure of processor load. Application related CPU activity. % (default) Percent of measurement interval processor spends in user state. Seconds/Interval Cumulative number of seconds processor spent in user state during last measurement interval. Seconds Cumulative number of seconds processor spent in user state, since system boot or last reset."
+::= { cpuEntry 4 }
+
+cpuSystemTime OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Measure of system-related CPU activity. % (default) Percent of measurement interval that processor spends in system state. Normalized to a maximum of 100%.Seconds/Interval Cumulative number of seconds that processor has spent in system state during last measurement interval. Sum of system time on all processors during last measurement interval. Seconds Cumulative number of seconds that processor has spent in system state, since system boot or last reset. Sum of system time on all processors since system boot or last reset."
+::= { cpuEntry 5 }
+
+cpuWaitTime   OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Percent of measurement interval that processor spends in an I/O wait state. Normalized to a maximum of 100%. Seconds/Interval Cumulative number of seconds that processor spends in an I/O wait state during last measurement interval. Sum of wait time on all processors during last measurement interval. Seconds Cumulative number of seconds that processor spends in an I/O wait state, since system boot or last reset. Sum of wait time on all processors since system boot or last reset."
+::= { cpuEntry 6 }
+
+cpuRunQ OBJECT-TYPE
+   SYNTAX	INTEGER
+   MAX-ACCESS	read-only
+   STATUS	current
+   DESCRIPTION
+      "The total number of Processes waiting for CPU in RunQ."
+::= { cpuEntry 7 }
+
+
+diskTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF DiskEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { Disk 1 }
+
+diskEntry OBJECT-TYPE
+              SYNTAX DiskEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { diskIndex }
+              ::= { diskTable 1 }
+
+DiskEntry ::=
+SEQUENCE {
+              diskIndex
+              Unsigned32,
+              diskName
+              DisplayString,
+              diskBlockSize
+              Integer32,
+              diskTransfers
+              Integer32,
+              diskTotalIO
+              Integer32,
+              diskBlocksRead
+              Integer32,
+              diskBlocksWrite
+              Integer32,
+              diskActiveTime
+              Integer32,
+              diskPaging
+              TruthValue,
+              diskPageSize
+              Integer32,
+              diskFactor
+              INTEGER,
+              diskResponseTime
+              TimeTicks
+}
+
+diskIndex     OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { diskEntry 1 }
+
+diskName      OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "String containing name of disk. Same name as contained in iostat command."
+::= { diskEntry 2 }
+
+diskBlockSize OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Block size of disk in bytes. Bytes/Interval Not meaningful for this metric. % Change Not meaningful for this metric. Bytes/Sec Not meaningful for this metric. Bytes (default) Block size in bytes."
+::= { diskEntry 3 }
+
+diskTransfers OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "I/O operations performed by disk since system boot time. Operations/Interval Transfers during last interval. Operations/SecAverage transfer rate during last measurement interval. Operations I/O transfers on this disk."
+::= { diskEntry 4 }
+
+diskTotalIO   OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "I/O performed by disk since system boot time. Pages/Interval Pages transferred during last interval. Pages/Sec (default) Average I/O rate during last measurement interval. Pages I/O pages transferred on this disk. Page size is 4KB, except on OSF where it is 8KB."
+::= { diskEntry 5 }
+
+diskBlocksRead              OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Blocks read from disk. Blocks/Interval Blocks read from disk during previous interval. Blocks/Sec (default) Average rate blocks were read from disk during previous interval. Blocks Blocks read from disk since boot time."
+::= { diskEntry 6 }
+
+diskBlocksWrite             OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Blocks written to a disk. Blocks/Interval Blocks written to disk during previous interval. Blocks/Sec (default) Average rate blocks were written to disk during previous interval. Blocks Blocks written to disk since boot time."
+::= { diskEntry 7 }
+
+diskActiveTime              OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Measure of disk activity. % (default) Percent of last measurement interval disk was active. Seconds/Interval Seconds disk was active during last measurement interval. Seconds Seconds disk was active since system boot time."
+::= { diskEntry 8 }
+
+diskPaging    OBJECT-TYPE
+   SYNTAX     TruthValue
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Paging indicates whether or not a disk is a paging device. A value of 1 indicates disk is paging device. A value of 0 indicates a disk is not paging device. Units/Interval Not meaningful for this metric. % Change Not meaningful for this metric. Units/Sec Not meaningful for this metric. Units (default) This unit will be a value of 1 or 0."
+::= { diskEntry 9 }
+
+diskPageSize  OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Page size of disk, in bytes."
+::= { diskEntry 10 }
+
+diskFactor    OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Page size, in KBytes."
+::= { diskEntry 11 }
+
+diskResponseTime            OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Active Time metric divided by Transfers metric. % Change Not meaningful for this metric."
+::= { diskEntry 12 }
+
+partitionTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF PartitionEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { Partition 1 }
+
+partitionEntry OBJECT-TYPE
+              SYNTAX PartitionEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { partitionIndex }
+              ::= { partitionTable 1 }
+
+PartitionEntry ::=
+SEQUENCE {
+              partitionIndex
+              Unsigned32,
+              partitionXferRate
+              Integer32,
+              partitionDiskQueue
+              INTEGER,
+              partitionTotalIOKbs
+              Integer32,
+              partitionTransfers
+              Integer32,
+              partitionTotalIO
+              Integer32,
+              partitionBlocksRead
+              Integer32,
+              partitionBlocksWrite
+              Integer32,
+              partitionActiveTime
+              Integer32,
+              partitionResponseTime
+              TimeTicks,
+              partitionType
+              DisplayString,
+              partitionName
+              DisplayString
+}
+
+partitionIndex              OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { partitionEntry 1 }
+
+partitionXferRate           OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Measure of disk I/O rate. Number should be fraction. A disk word is 64 bytes. ms/Disk Word/Interval Disk words transferred during the last measurement interval. % Change Percent change in the Xfer rate. ms/Disk Word/Sec Disk words transferred per second. Average number of milliseconds to transfer disk word during the last measurement interval."
+::= { partitionEntry 2 }
+
+partitionDiskQueue          OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Size of queue for which I/Os are waiting to access disk. Units/Interval Size of disk queue for I/Os during last measurement interval. Units/Sec (default) Average length of disk queue. Units Cumulative sum of length of disk queue waiting for disk service since initial boot."
+::= { partitionEntry 3 }
+
+partitionTotalIOKbs         OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Total I/O page size divided by 1024 bytes. KBs/Interval KBs transferred during last interval. KBs/Sec (default) Average I/O rate, in KB, during last measurement interval."
+::= { partitionEntry 4 }
+
+partitionTransfers          OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "I/O operations performed by disk partition since system boot time. Operations/Interval I/O transfers on disk partition. Average transfer rate during last measurement interval. Operations Transfers during last interval."
+::= { partitionEntry 5 }
+
+partitionTotalIO            OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "I/O performed by disk partition since system boot time. Pages/Interval I/O pages transferred on disk partition. Pages/Sec (default) Average I/O rate during last measurement interval. Pages Pages transferred during last interval."
+::= { partitionEntry 6 }
+
+partitionBlocksRead         OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Blocks read from disk partition. Blocks/Interval Blocks read from disk partition since boot time. Blocks/Sec (default) Average rate blocks were read from disk partition during previous interval. Blocks Blocks read from disk partition during previous interval."
+::= { partitionEntry 7 }
+
+partitionBlocksWrite        OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Blocks written to disk partition. Blocks/Interval Blocks written to disk partition since boot time. Blocks/Sec (default) Average rate blocks were written to disk partition during previous interval. Blocks Blocks written to disk partition during previous interval."
+::= { partitionEntry 8 }
+
+partitionActiveTime         OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Measure of disk partition activity. % (default) Percent of last measurement interval disk partition was active. Seconds Seconds disk partition was active since system boot time. Seconds/Interval Seconds disk partition was active during last measurement interval."
+::= { partitionEntry 9 }
+
+partitionResponseTime       OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Measure of average disk partition activity per number of transfers. (sec/transfer)."
+::= { partitionEntry 10 }
+
+partitionType OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "A string of partition type"
+::= { partitionEntry 11 }
+
+partitionName OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "A string of partition volume"
+::= { partitionEntry 12 }
+
+fsTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF FsEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { FileSystem 1 }
+
+fsEntry OBJECT-TYPE
+              SYNTAX FsEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { fsIndex }
+              ::= { fsTable 1 }
+
+FsEntry ::=
+SEQUENCE {
+              fsIndex
+              Unsigned32,
+              fsId
+              DisplayString,
+              fsName
+              DisplayString,
+              fsCapacity
+              Integer32,
+              fsType
+              DisplayString,
+              fsFree
+              Integer32,
+              fsRatio
+              Integer32,
+              fsUtilization
+              INTEGER,
+              fsInodeRatio
+              INTEGER,
+              fsLogicalVolName
+              DisplayString,
+              fsTotalInodesInFS
+              Integer32,
+              fsFreeInodesInFS
+              Integer32,
+              fsUsedInodes
+              Integer32,
+              fsUserFreeSpace
+              Integer32,
+              fsBlockSize
+              Integer32,
+              fsFreeBlocks
+              Integer32,
+              fsTotalBlocks
+              Integer32
+}
+
+fsIndex       OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { fsEntry 1 }
+
+fsId          OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "File system identifier."
+::= { fsEntry 2 }
+
+fsName        OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Name of file system"
+::= { fsEntry 3 }
+
+fsCapacity    OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Fixed number reflecting size of file system. KBytes/Interval Not meaningful for this metric. % Change Not meaningful for this metric. KBytes/Sec Not meaningful for this metric. KBytes (default) Size of file system in kilobytes."
+::= { fsEntry 4 }
+
+fsType        OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Type of file system"
+::= { fsEntry 5 }
+
+fsFree        OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Amount of free space on file system. KBytes/Interval Change in free space during last measurement interval. Positive number indicates more free space is becoming available. % Change Percent of change in free space during last interval. Positive number indicates more free space is becoming available. KBytes/Sec Average rate free space on file system changed during last interval. Positive number indicates more free space is becoming available. KBytes (default) Amount of free space on file system."
+::= { fsEntry 6 }
+
+fsRatio       OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "The ratio of used file system to available file system."
+::= { fsEntry 7 }
+
+fsUtilization OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Measures how full file system is. Computed by following formula. Utilization = 100 * (Capacity - Free)/Capacity %/Interval Change in utilization during last measurement interval. Positivenumber indicates that more free space is being used. % Change Percent change in utilization during last interval. %/Sec Average rate file system filled up during last interval. Positive number indicates more free space is being used. % (default) Percentage of file system that is full."
+::= { fsEntry 8 }
+
+fsInodeRatio  OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "The ratio of used Inodes to total Inodes in file system."
+::= { fsEntry 9 }
+
+fsLogicalVolName            OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Name of logical volume associated with one or more disks."
+::= { fsEntry 10 }
+
+fsTotalInodesInFS           OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Inodes allocated to file system. Reported as count. Units/Interval Not meaningful for this metric. % Change Not meaningful for this metric. Units/Sec Not meaningful for this metric. Units (default) Inodes in file system."
+::= { fsEntry 11 }
+
+fsFreeInodesInFS            OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Free inodes for file system. Reported as count. Units/Interval Change in free inodes during last measurement interval. Positive number indicates more inodes are becoming available. % Change Percent change in free inodes during last interval. Positive number indicates more inodes are becoming available. Units/Sec Average rate free inodes in file system changed during last interval. Positive number indicates more inodes are becoming available. Units (default) Amount of free inodes in file system."
+::= { fsEntry 12 }
+
+fsUsedInodes  OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Total nodes that are in use in file system."
+::= { fsEntry 13 }
+
+fsUserFreeSpace             OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Amount of file system space available that is allocated for general use. User free space is different from file total free space. File total free space is sum of total user and root free space metrics. KBytes/Interval Change in user free space during last measurement interval. Positive number indicates more user free space is becoming available. % Change Percent change in user free space during last interval. Positive number indicates more user free space is becoming available. KBytes/Sec Average rate user free space on file system changed during last interval. Positive number indicates more user free space is becoming available. KBytes (default) Amount of user free space on file system."
+::= { fsEntry 14 }
+
+fsBlockSize   OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "The size of the blocks used for a particular file system in kilobytes."
+::= { fsEntry 15 }
+
+fsFreeBlocks  OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Measure of the blocks available in the file system in kilobytes."
+::= { fsEntry 16 }
+
+fsTotalBlocks OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Total number of blocks allocated to a file system in kilobytes."
+::= { fsEntry 17 }
+
+networkTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF NetworkEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { Network 1 }
+
+networkEntry OBJECT-TYPE
+              SYNTAX NetworkEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { networkIndex }
+              ::= { networkTable 1 }
+
+NetworkEntry ::=
+SEQUENCE {
+              networkIndex
+              Unsigned32,
+              networkNICId
+              DisplayString,
+              networkProtocol
+              DisplayString,
+              networkInPackets
+              Counter,
+              networkOutPackets
+              Counter,
+              networkErrorCount
+              Counter,
+              networkInBytes
+              Counter,
+              networkOutBytes
+              Counter,
+              networkCollisionsRate
+              INTEGER
+}
+
+networkIndex  OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { networkEntry 1 }
+
+networkNICId  OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Network Interface Identifier"
+::= { networkEntry 2 }
+
+networkProtocol             OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Character string reflecting protocol or device name pertaining to data record. ICMPSTAT ICMP protocol statistics. IPSTAT IP protocol statistics. TCPSTAT ICP protocol statistics. UDPSTAT UDP protocol statistics. lo0 Loopback device statistics.xxxx0 (where xxxx is the interface name)  Other network interface statistics."
+::= { networkEntry 3 }
+
+networkInPackets            OBJECT-TYPE
+   SYNTAX     Counter
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Incoming network packets for certain protocol or device. Packets/Interval Packets received during last measurement interval. Average incoming packet rate during last measurement interval. Packets Cumulative number of packets received since system boot or last reset."
+::= { networkEntry 4 }
+
+networkOutPackets           OBJECT-TYPE
+   SYNTAX     Counter
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Outgoing network packets for certain protocol or device. Packets/Interval Packets sent during last measurement interval. Average outgoing packet rate during last measurement interval. Packets Cumulative number of packets sent since system boot or last reset."
+::= { networkEntry 5 }
+
+networkErrorCount           OBJECT-TYPE
+   SYNTAX     Counter
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Network errors for certain protocol or device. Errors/Interval Errors detected during last measurement interval. Average error rate during last measurement interval. Errors Cumulative number of network errors detected since system boot or last reset."
+::= { networkEntry 6 }
+
+networkInBytes              OBJECT-TYPE
+   SYNTAX     Counter
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Bytes received for certain protocol or device. Bytes/Interval Bytes received during last measurement interval. Average incoming byte rate during last measurement interval. Bytes Cumulative number of bytes received since system boot or last reset."
+::= { networkEntry 7 }
+
+networkOutBytes             OBJECT-TYPE
+   SYNTAX     Counter
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Bytes sent for certain protocol or device. Bytes/Interval Bytes sent during last measurement interval. Average outgoing byte rate during last measurement interval. Bytes Cumulative number of bytes sent since system boot or last reset"
+::= { networkEntry 8 }
+
+networkCollisionsRate       OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Network collisions for certain protocol or device. Collisions/Interval Collisions during last measurement interval. Average collision rate during last measurement interval. Collisions Cumulative number of network collisions since system boot or last reset."
+::= { networkEntry 9 }
+
+swapCharsTransferByWrite    OBJECT-TYPE
+   SYNTAX     Counter
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Total number of characters transferred by write system calls. Chars/Interval Total number of characters transferred by write system calls during the last measured interval. % Change Percent change in the number of characters transferred by write system calls during the last measured interval. Chars/Sec Rate of change in the number of characters transferred by write system calls per second. Chars (def) Cumulative total number of characters transferred by write system calls."
+::= { Swap 1 }
+
+swapProcessContextSwitch    OBJECT-TYPE
+   SYNTAX     Counter
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Total number of process context switches. Switches/Interval Number of process context switches during the last measured interval. % Change Percent change in the number of process context switches during the last measured interval. Switches/Sec Number of process context switches per second.Switches Cumulative total number of process context switches."
+::= { Swap 2 }
+
+swapNumProcessIns           OBJECT-TYPE
+   SYNTAX     Counter
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Total number of processes swapped in. Swaps/Interval Number of processes swapped in the last measured interval. % Change Percent change in the number of processes swapped in the last measured interval. Swaps/Sec Number of processes swapped in per second. Swaps Cumulative total number of processes swapped in."
+::= { Swap 3 }
+
+swapNumProcessOuts          OBJECT-TYPE
+   SYNTAX     Counter
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Total number of processes swapped out. Swaps/Interval Number of processes swapped out during the last measured interval. % Change Percent change in the number of processes swapped out during the last measured interval. Swaps/Sec Number of processes swapped out per second. Swaps Cumulative total number of processes swapped out."
+::= { Swap 4 }
+
+swapNumByteIn OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Total number of 512-byte units transferred for swapins. Units/Interval Number of 512-byte units transferred for swapins during the last measured interval. % Change Percent change in the number of 512-byte units swapped in during the last measured interval. Units/sec Change in the number of 512-byte units swapped in per second. Units (def) Cumulative total number of 512-byte units transferred for swapped in processes."
+::= { Swap 5 }
+
+swapNumByteOut              OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Total number of 512-byte units transferred for swapouts. Units/Interval Number of 512-byte units transferred for swapouts during the last measured interval. % Change Percent change in the number of 512-byte units swapped out during the last measured interval. Units/sec Change in the number of 512-byte units swapped out per second. Units (def) Cumulative total number of 512-byte units transferred for swapped out processes."
+::= { Swap 6 }
+
+sharedMemMaxSize            OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Maximum shared memory segment size. Bytes/Interval Not meaningful for this metric. % Change Not meaningful for this metric. Bytes/Sec Not meaningful for this metric. Bytes (default) Maximum size, in bytes, of shared memory segment."
+::= { SharedMemory 1 }
+
+sharedMemMinSize            OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Minimum shared memory segment size. Bytes/Interval Not meaningful for this metric. % Change Not meaningful for this metric. Bytes/Sec Not meaningful for this metric. Bytes (default) Minimum size, in bytes, of shared memory segment."
+::= { SharedMemory 2 }
+
+sharedMemTotalNumIDs        OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "System-wide total of shared memory identifiers. IDs/Interval Total of shared memory identifiers during the last measurement interval. % Change Percent change in the total number of shared memory identifiers. IDs/Sec Total of shared memory identifiers per second. IDs (default) Current total number of shared memory identifiers."
+::= { SharedMemory 3 }
+
+sharedMemMaxSegPerProc      OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Maximum number of attached shared memory segments per process. Segments/Interval Not meaningful for this metric. % Change Not meaningful for this metric. Segments/Sec Not meaningful for this metric. Segments (default) Maximum number of attached shared memory segments."
+::= { SharedMemory 4 }
+
+sharedMemNumOfIDsUsed       OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Identifiers already used. IDs/Interval Total of identifiers used during the last measurement interval. % Change Percent change in the total number of identifiers. IDs/Sec Not meaningful for this metric. IDs (default) Current total number of identifiers already used."
+::= { SharedMemory 5 }
+
+sharedMemMinUsedKB          OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Minimum amount of shared memory used (in KB)."
+::= { SharedMemory 6 }
+
+sharedMemMaxUsedKB          OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Maximum amount of shared memory used (in KB)."
+::= { SharedMemory 7 }
+
+sharedMemAvgUsedKB          OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Average amount of shared memory used (in KB)."
+::= { SharedMemory 8 }
+
+sharedMemTotalUsedKB        OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Total amount of shared memory used (in KB)."
+::= { SharedMemory 9 }
+
+sharedMemMinIDsUsed         OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Minimum number of shared memory identifiers used."
+::= { SharedMemory 10 }
+
+sharedMemMaxIDsUsed         OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Maximum number of shared memory identifiers used."
+::= { SharedMemory 11 }
+
+sharedMemAvgIDsUsed         OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Average number of shared memory identifiers used."
+::= { SharedMemory 12 }
+
+sharedMemTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF SharedMemEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { SharedMemory 13 }
+
+sharedMemEntry OBJECT-TYPE
+              SYNTAX SharedMemEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { sharedMemIndex }
+              ::= { sharedMemTable 1 }
+
+SharedMemEntry ::=
+SEQUENCE {
+              sharedMemIndex
+              Unsigned32,
+              sharedMemID
+              DisplayString,
+              sharedMemKey
+              INTEGER,
+              sharedMemMode
+              INTEGER,
+              sharedMemOwner
+              DisplayString,
+              sharedMemGroup
+              DisplayString,
+              sharedMemCreator
+              DisplayString,
+              sharedMemCreatorGroup
+              DisplayString
+}
+
+sharedMemIndex              OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { sharedMemEntry 1 }
+
+sharedMemID   OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Shared memory identifier."
+::= { sharedMemEntry 2 }
+
+sharedMemKey  OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "IPC key of shared memory."
+::= { sharedMemEntry 3 }
+
+sharedMemMode OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Shared memory mode."
+::= { sharedMemEntry 4 }
+
+sharedMemOwner              OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Login name of owner of shared memory."
+::= { sharedMemEntry 5 }
+
+sharedMemGroup              OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Group name of owner group."
+::= { sharedMemEntry 6 }
+
+sharedMemCreator            OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Login name of creator of shared memory."
+::= { sharedMemEntry 7 }
+
+sharedMemCreatorGroup       OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Group name of creator group."
+::= { sharedMemEntry 8 }
+
+semaphoreResourceMapSize    OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Resource map size for semaphores. Bytes/Interval Size of the resource map size during the last measurement interval. % Change Percent change in the resource map size. Bytes/Sec Not meaningful for this metric. Bytes (default) Current size of resource map size."
+::= { Semaphore 1 }
+
+semaphoreTotalNumIDs        OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Identifiers for semaphores. IDs/Interval Not meaningful for this metric. % Change Not meaningful for this metric. IDs/Sec Not meaningful for this metric. IDs (default) Total number of identifiers for semaphores."
+::= { Semaphore 2 }
+
+semaphoreTotal              OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "System wide total of semaphores. Semaphores/Interval Total number of semaphores during the last measurement interval. % Change Percent change in the total number of semaphores. Semaphores/Sec Not meaningful for this metric.Semaphores (default) Current total number of semaphores."
+::= { Semaphore 3 }
+
+semaphoreTotalUndoStructs   OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "System-wide total of semaphore undo structures. Structs/Interval Total number of semaphore undo structures during the last measurement interval. % Change Percent change in the total number of semaphore undo structures. Structs/Sec Number of semaphore undo structures per second. Structs (default) Current total number of semaphore undo structures."
+::= { Semaphore 4 }
+
+semaphoreMaxNumSemsPerID    OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Maximum number of semaphores per identifier."
+::= { Semaphore 5 }
+
+semaphoreMaxNumOperations   OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Maximum number of operations per semaphore call."
+::= { Semaphore 6 }
+
+semaphoreMaxNumUndoEntries  OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Maximum number of undo entries per process."
+::= { Semaphore 7 }
+
+semaphoreSizeUndoStructs    OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Size (in bytes) of undo structures. Bytes/Interval Total number of semaphore undo structures during the last measurement interval. % Change Percent change in the total number of semaphore undo structures. Bytes/Sec Number of semaphore undo structures per second. Bytes (default) Current total number of semaphore undo structures."
+::= { Semaphore 8 }
+
+semaphoreMaxValue           OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Maximum value for semaphores."
+::= { Semaphore 9 }
+
+semaphoreAdjustedMaxValue   OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Adjust-on-exit maximum value."
+::= { Semaphore 10 }
+
+semaphoreNumIDsUsed         OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Identifiers already used. IDs/Interval Total of identifiers used during the last measurement interval. % Change Percent change in the total number of identifiers. IDs/Sec Not meaningful for this metric. IDs (default) Current total number of identifiers already used."
+::= { Semaphore 11 }
+
+semaphoreMinIDsUsed         OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Minimum number of identifiers used during the last measurement interval."
+::= { Semaphore 12 }
+
+semaphoreMaxIDsUsed         OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Maximum number of identifiers used during the last measurement interval."
+::= { Semaphore 13 }
+
+semaphoreAvgIDsUsed         OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Average number of identifiers used during the last measurement interval."
+::= { Semaphore 14 }
+
+msgQTotalHeaders            OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "System-wide total of message headers. Headers/Interval Total message headers during the last measurement interval. % Change Percent change in message headers. Headers/Sec Not meaningful for this metric. Headers (default) Current total of message headers."
+::= { MessageQueue 1 }
+
+msgQTotalSegments           OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "System-wide total of message segments. Segments/Interval Total message segments during the last measurement interval. % Change Percent change in message segments. Segments/Sec Not meaningful for this metric. Segments (default) Current total of message segments."
+::= { MessageQueue 2 }
+
+msgQNumIDsUsed              OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Identifiers already used. IDs/Interval Number of identifiers used during the last measurement interval. % Change Percent change in the number of identifiers used. IDs/Sec Not meaningful for this metric. IDs (default) Current number of identifiers."
+::= { MessageQueue 3 }
+
+msgQTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF MsgQEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { MessageQueue 4 }
+
+msgQEntry OBJECT-TYPE
+              SYNTAX MsgQEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { msgQIndex }
+              ::= { msgQTable 1 }
+
+MsgQEntry ::=
+SEQUENCE {
+              msgQIndex
+              Unsigned32,
+              msgQID
+              DisplayString,
+              msgQKey
+              INTEGER,
+              msgQMode
+              INTEGER,
+              msgQOwner
+              DisplayString,
+              msgQGroup
+              DisplayString,
+              msgQCreator
+              DisplayString,
+              msgQCreatorGroup
+              DisplayString,
+              msgQMessageOnQueue
+              Integer32,
+              msgQMaxBytes
+              Integer32,
+              msgQLastPIDSendQueue
+              INTEGER,
+              msgQLastPIDReceiveMsg
+              INTEGER,
+              msgQLastMsgSentTime
+              DateAndTime,
+              msgQLastMsgReceiveTime
+              DateAndTime,
+              msgQCreateOrChangeTime
+              DateAndTime
+}
+
+msgQIndex     OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { msgQEntry 1 }
+
+msgQID        OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Message queue identifier."
+::= { msgQEntry 2 }
+
+msgQKey       OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "IPC key of message queue."
+::= { msgQEntry 3 }
+
+msgQMode      OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Message queue mode."
+::= { msgQEntry 4 }
+
+msgQOwner     OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Login name of owner."
+::= { msgQEntry 5 }
+
+msgQGroup     OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Group name of owner group."
+::= { msgQEntry 6 }
+
+msgQCreator   OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Login name of creator."
+::= { msgQEntry 7 }
+
+msgQCreatorGroup            OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Group name of creator group."
+::= { msgQEntry 8 }
+
+msgQMessageOnQueue          OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Bytes in messages currently outstanding on associated message queue. Messages/Interval Number of outstanding messages during the last measurement interval. % Change Percent change in outstanding messages. Messages/Sec Number of outstanding messages per second. Messages (default) Current number of outstanding messages."
+::= { msgQEntry 9 }
+
+msgQMaxBytes  OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Maximum number of bytes allowed in messages outstanding on associated queue. Bytes/Interval Not meaningful for this metric. % Change Not meaningful for this metric. Bytes/Sec Not meaningful for this metric. Bytes (default) Maximum number of bytes allowed in messages outstanding on associated queue. "
+::= { msgQEntry 10 }
+
+msgQLastPIDSendQueue        OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Process ID of the last process to send a message to the associated queue."
+::= { msgQEntry 11 }
+
+msgQLastPIDReceiveMsg       OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Process ID of last process to receive message from associated queue."
+::= { msgQEntry 12 }
+
+msgQLastMsgSentTime         OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Time last message was sent to associated queue."
+::= { msgQEntry 13 }
+
+msgQLastMsgReceiveTime      OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Time last message was received from associated queue."
+::= { msgQEntry 14 }
+
+msgQCreateOrChangeTime      OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Time when associated message queue was created or changed."
+::= { msgQEntry 15 }
+
+netApplicationMonitoringTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF NetApplicationMonitoringEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { netApplication 1 }
+
+netApplicationMonitoringEntry OBJECT-TYPE
+              SYNTAX NetApplicationMonitoringEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { netApplicationMonitoringIndex }
+              ::= { netApplicationMonitoringTable 1 }
+
+NetApplicationMonitoringEntry ::=
+SEQUENCE {
+              netApplicationMonitoringIndex
+              Unsigned32,
+              netApplicationMonitoringCreator
+              OCTET STRING,
+              netApplicationMonitoringDescription
+              DisplayString,
+              netApplicationMonitoringServerAddress
+              IpAddress,
+              netApplicationMonitoringProcessName
+              DisplayString,
+              netApplicationMonitoringPort
+              INTEGER,
+              netApplicationMonitoringSampleInterval
+              INTEGER,
+              netApplicationMonitoringInterfaceNum
+              INTEGER,
+              netApplicationMonitoringStartDate
+              DateAndTime,
+              netApplicationMonitoringEndDate
+              DateAndTime,
+              netApplicationMonitoringMonStartTime
+              TimeTicks,
+              netApplicationMonitoringMonEndTime
+              TimeTicks,
+              netApplicationMonitoringTueStartTime
+              TimeTicks,
+              netApplicationMonitoringTueEndTime
+              TimeTicks,
+              netApplicationMonitoringWebStartTime
+              TimeTicks,
+              netApplicationMonitoringWebEndTime
+              TimeTicks,
+              netApplicationMonitoringThuStartTime
+              TimeTicks,
+              netApplicationMonitoringThuEndTime
+              TimeTicks,
+              netApplicationMonitoringFriStartTime
+              TimeTicks,
+              netApplicationMonitoringFriEndTime
+              TimeTicks,
+              netApplicationMonitoringSatStartTime
+              TimeTicks,
+              netApplicationMonitoringSatEndTime
+              TimeTicks,
+              netApplicationMonitoringSunStartTime
+              TimeTicks,
+              netApplicationMonitoringSunEndTime
+              TimeTicks,
+              netApplicationMonitoringCreateDateTime
+              DateAndTime,
+              netApplicationMonitoringStatus
+              RowStatus,
+              netApplicationMonitoringRTT
+              TimeTicks,
+              netApplicationMonitoringAvgCPUPercentage
+              INTEGER,
+              netApplicationMonitoringAvgMemoryPercentage
+              INTEGER,
+              netApplicationMonitoringInOctets
+              Counter32,
+              netApplicationMonitoringInPkts
+              Counter32,
+              netApplicationMonitoringOutOctets
+              Counter32,
+              netApplicationMonitoringOutPkts
+              Counter32
+}
+
+netApplicationMonitoringIndex             OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "Uniquely identifies this row in the netApplianceTable."
+::= { netApplicationMonitoringEntry 1 }
+
+netApplicationMonitoringCreator           OBJECT-TYPE
+   SYNTAX     OCTET STRING
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Defines the owner/creator of the control row."
+::= { netApplicationMonitoringEntry 2 }
+
+netApplicationMonitoringDescription       OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "User-based description of the SLA transaction monitored."
+::= { netApplicationMonitoringEntry 3 }
+
+netApplicationMonitoringServerAddress     OBJECT-TYPE
+   SYNTAX     IpAddress
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Server IP Address"
+::= { netApplicationMonitoringEntry 4 }
+
+netApplicationMonitoringProcessName       OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The application process name. The application service process is determined by a substring comparison with the specified netApplianceProcessName.  If no process name is specified it  will only monitor processes associated with ports."
+::= { netApplicationMonitoringEntry 5 }
+
+netApplicationMonitoringPort              OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The port number of the monitored protocol. The value of netAppliancePort is used in conjunction with the netApplianceProcessName to determine which application process shall be monitored by this netApplianceEntry. If no netApplianceProcessName is specified, and this variable has a valid value, then this netApplianceEntry will determine the name of the process that services this port. If a netApplianceProcessName is specified, and the value of this variable is zero (an invalid port), then this  netApplianceEntry will determine which port(s) the specified  process name services and use those. If no netApplianceProcessName is specified, and this variable has a value of zero (an invalid port), then the netApplianceEntry  will monitor the status of all network processes. That is, the resource consumption of all processes associated with ports, and the network  statistics for all transactions as determined by the TransportType and DataSource."
+::= { netApplicationMonitoringEntry 6 }
+
+netApplicationMonitoringSampleInterval    OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Sampling interval (seconds). The netApplianceSampleInterval is used to determine how often the data is queried from the server. This only occurs on systems where there is a configurable amount of allowed  connections per interval.  A connect will soon fail if the maximum number of allowed connections in a netApplianceSampleInterval is less than one.  It is sufficient to report this possible error the first time a connect fails."
+::= { netApplicationMonitoringEntry 7 }
+
+netApplicationMonitoringInterfaceNum    OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Sampling interval (seconds). The netApplianceSampleInterval is used to determine how often the data is queried from the server. This only occurs on systems where there is a configurable amount of allowed  connections per interval.  A connect will soon fail if the maximum number of allowed connections in a netApplianceSampleInterval is less than one.  It is sufficient to report this possible error the first time a connect fails."
+::= { netApplicationMonitoringEntry 8 }
+
+netApplicationMonitoringStartDate         OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to start monitoring"
+::= { netApplicationMonitoringEntry 9 }
+
+netApplicationMonitoringEndDate           OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to end monitoring"
+::= { netApplicationMonitoringEntry 10 }
+
+netApplicationMonitoringMonStartTime      OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to start monitoring in Monday"
+::= { netApplicationMonitoringEntry 11 }
+
+netApplicationMonitoringMonEndTime        OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to end monitoring in Monday"
+::= { netApplicationMonitoringEntry 12 }
+
+netApplicationMonitoringTueStartTime      OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to start monitoring in Tuesday"
+::= { netApplicationMonitoringEntry 13 }
+
+netApplicationMonitoringTueEndTime        OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to end monitoring in Tuesday"
+::= { netApplicationMonitoringEntry 14 }
+
+netApplicationMonitoringWebStartTime      OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to start monitoring in Wednesday"
+::= { netApplicationMonitoringEntry 15 }
+
+netApplicationMonitoringWebEndTime        OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to end monitoring in Wednesday"
+::= { netApplicationMonitoringEntry 16 }
+
+netApplicationMonitoringThuStartTime      OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to start monitoring in Thursday"
+::= { netApplicationMonitoringEntry 17 }
+
+netApplicationMonitoringThuEndTime        OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to end monitoring in Thursday"
+::= { netApplicationMonitoringEntry 18 }
+
+netApplicationMonitoringFriStartTime      OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to start monitoring in Friday"
+::= { netApplicationMonitoringEntry 19 }
+
+netApplicationMonitoringFriEndTime        OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to end monitoring in Friday"
+::= { netApplicationMonitoringEntry 20 }
+
+netApplicationMonitoringSatStartTime      OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to start monitoring in Saturday"
+::= { netApplicationMonitoringEntry 21 }
+
+netApplicationMonitoringSatEndTime        OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to end monitoring in Saturday"
+::= { netApplicationMonitoringEntry 22 }
+
+netApplicationMonitoringSunStartTime      OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to start monitoring in Sunday"
+::= { netApplicationMonitoringEntry 23 }
+
+netApplicationMonitoringSunEndTime        OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to end monitoring in Sunday"
+::= { netApplicationMonitoringEntry 24 }
+
+netApplicationMonitoringCreateDateTime    OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The value of sysUpTime when this entry was last activated. This can be used by the management station to ensure that the entry has not been deleted and recreated between polls."
+::= { netApplicationMonitoringEntry 25 }
+
+netApplicationMonitoringStatus            OBJECT-TYPE
+   SYNTAX     RowStatus
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "SNMPv2 Row Status. Controls creation, activation and deletion of the control row."
+::= { netApplicationMonitoringEntry 26 }
+
+netApplicationMonitoringRTT OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Round Trip Time"
+::= { netApplicationMonitoringEntry 27 }
+
+netApplicationMonitoringAvgCPUPercentage  OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The average percentage of CPU used by the monitored application service."
+::= { netApplicationMonitoringEntry 28 }
+
+netApplicationMonitoringAvgMemoryPercentage             OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The average percentage of physical memory used by the monitored application service. If no process has been specified to be monitored, the value of AvgMemoryPercentage shall represent the percentage of memory used by all processes associated with ports (defined by DataSource and TransportType)."
+::= { netApplicationMonitoringEntry 29 }
+
+netApplicationMonitoringInOctets          OBJECT-TYPE
+   SYNTAX     Counter32
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Number of inbound octets for this network application type."
+::= { netApplicationMonitoringEntry 30 }
+
+netApplicationMonitoringInPkts            OBJECT-TYPE
+   SYNTAX     Counter32
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Number of inbound packets for this network application type."
+::= { netApplicationMonitoringEntry 31 }
+
+netApplicationMonitoringOutOctets         OBJECT-TYPE
+   SYNTAX     Counter32
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Number of outbound octets for this network application type."
+::= { netApplicationMonitoringEntry 32 }
+
+netApplicationMonitoringOutPkts           OBJECT-TYPE
+   SYNTAX     Counter32
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Number of outbound packets for this network application type."
+::= { netApplicationMonitoringEntry 33 }
+
+transactionTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF TransactionEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { Transaction 1 }
+
+transactionEntry OBJECT-TYPE
+              SYNTAX TransactionEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { transactionIndex }
+              ::= { transactionTable 1 }
+
+TransactionEntry ::=
+SEQUENCE {
+              transactionIndex
+              INTEGER,
+              transactionClientAddress
+              OCTET STRING,
+              transactionApplication
+              DisplayString,
+              transactionTransportPort
+              INTEGER,
+              transactionSampleInterval
+              INTEGER,
+              transactionCreateDateTime
+              DateAndTime,
+              transactionDescription
+              DisplayString,
+              transactionOwner
+              OCTET STRING,
+              transactionCurrentClientAddress
+              OCTET STRING,
+              transactionCurrentTransactionApp
+              DisplayString,
+              transactionResponseTimeAvg
+              INTEGER,
+              transactionAvgCPUPercentage
+              INTEGER,
+              transactionAvgMemoryPercentage
+              INTEGER,
+              transactionInOctets
+              Counter64,
+              transactionInPkts
+              Counter64,
+              transactionOutOctets
+              Counter64,
+              transactionOutPkts
+              Counter64,
+              transactionStatus
+              RowStatus
+}
+
+transactionIndex            OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "Uniquely identifies this row in the transactionTable. transactionControlDataSource The source of data for this transaction control row. The statistics in this group reflect all packets on the local network segment attached to the identified interface. This object may not be modified if the associated transactionControlStatus object is equal to active(1)."
+::= { transactionEntry 1 }
+
+transactionClientAddress    OBJECT-TYPE
+   SYNTAX     OCTET STRING
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Client IP name or address (default: the IP address of the first available datasource) If this object is set to '*' then data will be collected for all clients.  Otherwise data will only be collected for the client of the specified name or address.  Note that network numbers are not recognised, but if a name is given that resolves to multiple network addresses, data will be collected for any of those addresses. This object may not be modified if the associated transactionControlStatus object is equal to active(1)."
+::= { transactionEntry 2 }
+
+transactionApplication      OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "This object specifies the application/transaction which is to be  monitored."
+::= { transactionEntry 3 }
+
+transactionTransportPort    OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The port number of the monitored protocol, which transaction process shall be monitored."
+::= { transactionEntry 4 }
+
+transactionSampleInterval   OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Sampling interval (seconds). The transactionSampleInterval is used to determine how often the data is queried from the server. This only occurs on systems where there is a configurable amount of allowed  connections per interval.  A connect will soon fail if the maximum number of allowed connections in a transactionSampleInterval is less than one.  It is sufficient to report this possible error the first time a connect fails."
+::= { transactionEntry 5 }
+
+transactionCreateDateTime   OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The value of sysUpTime when this entry was last activated. This can be used by the management station to ensure that the entry has not been deleted and recreated between polls."
+::= { transactionEntry 6 }
+
+transactionDescription      OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "A comment describing the configuration of this row."
+::= { transactionEntry 7 }
+
+transactionOwner            OBJECT-TYPE
+   SYNTAX     OCTET STRING
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The entity that configured this entry and is therefore using the resources assigned to it."
+::= { transactionEntry 8 }
+
+transactionCurrentClientAddress           OBJECT-TYPE
+   SYNTAX     OCTET STRING
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Client network address."
+::= { transactionEntry 9 }
+
+transactionCurrentTransactionApp          OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "currently identifies a transaction type between a client/server pair of a certain application. "
+::= { transactionEntry 10 }
+
+transactionResponseTimeAvg  OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Server response time (in milliseconds) average. Server response time is the time between the client sending the initial request and the time when it receives the first response packet."
+::= { transactionEntry 11 }
+
+transactionAvgCPUPercentage OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The average percentage of CPU used by the monitored transaction service."
+::= { transactionEntry 12 }
+
+transactionAvgMemoryPercentage            OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The average percentage of memory used by the monitored transaction service."
+::= { transactionEntry 13 }
+
+transactionInOctets         OBJECT-TYPE
+   SYNTAX     Counter64
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Number of inbound octets for this transaction type."
+::= { transactionEntry 14 }
+
+transactionInPkts           OBJECT-TYPE
+   SYNTAX     Counter64
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Number of inbound packets for this transaction type."
+::= { transactionEntry 15 }
+
+transactionOutOctets        OBJECT-TYPE
+   SYNTAX     Counter64
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Number of outbound octets for this transaction type."
+::= { transactionEntry 16 }
+
+transactionOutPkts          OBJECT-TYPE
+   SYNTAX     Counter64
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Number of outbound packets for this transaction type."
+::= { transactionEntry 17 }
+
+transactionStatus           OBJECT-TYPE
+   SYNTAX     RowStatus
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The status of this row. An entry may not exist in the active state unless all objects in the entry have an appropriate value. If this object is not equal to active(1), all associated entries in the transactionDataTable shall be deleted."
+::= { transactionEntry 18 }
+
+pcSystemName  OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "system name"
+::= { PersonalComputer 1 }
+
+pcSystemOS    OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "system OS"
+::= { PersonalComputer 2 }
+
+pcBiosVersion OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Bios Version"
+::= { PersonalComputer 3 }
+
+pcBiosDate    OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Bios Date"
+::= { PersonalComputer 4 }
+
+pcPhysMemorySize            OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Physical Memory Size"
+::= { PersonalComputer 5 }
+
+pcVideoKind   OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Video Card Type"
+::= { PersonalComputer 6 }
+
+pcVideoChip   OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Video Card Chip Kind"
+::= { PersonalComputer 7 }
+
+pcMouseBtn    OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Mouse Button count"
+::= { PersonalComputer 8 }
+
+pcMouseKind   OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Mouse Type"
+::= { PersonalComputer 9 }
+
+pcKeyboard    OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Key board type"
+::= { PersonalComputer 10 }
+
+pcSoundCardKind             OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "sound card type"
+::= { PersonalComputer 11 }
+
+pcSoundCardInstalledFlag    OBJECT-TYPE
+   SYNTAX     TruthValue
+   MAX-ACCESS               read-only
+   STATUS current
+   DESCRIPTION
+      "Sound Card or not"
+::= { PersonalComputer 12 }
+
+pcCPUTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF PcCPUEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { PersonalComputer 13 }
+
+pcCPUEntry OBJECT-TYPE
+              SYNTAX PcCPUEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { pcCPUIndex }
+              ::= { pcCPUTable 1 }
+
+PcCPUEntry ::=
+SEQUENCE {
+              pcCPUIndex
+              Unsigned32,
+              pcCPUKind
+              DisplayString,
+              pcCPUClock
+              INTEGER
+}
+
+pcCPUIndex    OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { pcCPUEntry 1 }
+
+pcCPUKind     OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "CPU Types"
+::= { pcCPUEntry 2 }
+
+pcCPUClock    OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "CPU Speed(MHz)"
+::= { pcCPUEntry 3 }
+
+pcLancardTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF PcLancardEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { PersonalComputer 14 }
+
+pcLancardEntry OBJECT-TYPE
+              SYNTAX PcLancardEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { pcLancardIndex }
+              ::= { pcLancardTable 1 }
+
+PcLancardEntry ::=
+SEQUENCE {
+              pcLancardIndex
+              Unsigned32,
+              pcLancardChip
+              DisplayString,
+              pcLancardMacAddress
+              OCTET STRING
+}
+
+pcLancardIndex              OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { pcLancardEntry 1 }
+
+pcLancardChip OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "LAN Card Type"
+::= { pcLancardEntry 2 }
+
+pcLancardMacAddress         OBJECT-TYPE
+   SYNTAX     OCTET STRING
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "MAC Address"
+::= { pcLancardEntry 3 }
+
+pcSerialPortTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF PcSerialPortEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { PersonalComputer 15 }
+
+pcSerialPortEntry OBJECT-TYPE
+              SYNTAX PcSerialPortEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { pcSerialPortIndex }
+              ::= { pcSerialPortTable 1 }
+
+PcSerialPortEntry ::=
+SEQUENCE {
+              pcSerialPortIndex
+              Unsigned32,
+              pcSerialPortMemoryAddress
+              OCTET STRING
+}
+
+pcSerialPortIndex           OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { pcSerialPortEntry 1 }
+
+pcSerialPortMemoryAddress   OBJECT-TYPE
+   SYNTAX     OCTET STRING
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Serial Port Memory Address"
+::= { pcSerialPortEntry 2 }
+
+pcLPTPortTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF PcLPTPortEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { PersonalComputer 16 }
+
+pcLPTPortEntry OBJECT-TYPE
+              SYNTAX PcLPTPortEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { pcLPTPortIndex }
+              ::= { pcLPTPortTable 1 }
+
+PcLPTPortEntry ::=
+SEQUENCE {
+              pcLPTPortIndex
+              Unsigned32,
+              pcLPTPortMemoryAddress
+              OCTET STRING
+}
+
+pcLPTPortIndex              OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { pcLPTPortEntry 1 }
+
+pcLPTPortMemoryAddress      OBJECT-TYPE
+   SYNTAX     OCTET STRING
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "LPT Port Memory Address"
+::= { pcLPTPortEntry 2 }
+
+psRunningTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF PsRunningEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { Process 1 }
+
+psRunningEntry OBJECT-TYPE
+              SYNTAX PsRunningEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { psRunningPID }
+              ::= { psRunningTable 1 }
+
+PsRunningEntry ::=
+SEQUENCE {
+              psRunningPID
+              Unsigned32,
+              psRunningPGID
+              Unsigned32,
+              psRunningPPID  
+              Unsigned32,
+              psRunningName  
+              DisplayString,
+              psRunningState 
+              INTEGER,
+              psAge
+              TimeTicks,
+              psRunningPriority
+              Integer32,
+              psRunningSize  
+              INTEGER,
+              psRunningRSS   
+              INTEGER,
+              psRunningPageFaults
+              Counter32,
+              psRunningHardPageFaults
+              Counter32,
+              psRunningContextSwitches
+              Counter32,
+              psRunningThreads   
+              Gauge32,
+              psRunningHandles   
+              Gauge32,
+              psRunningPercentCPU
+              Integer32,
+              psRunningKernelTime
+              TimeTicks,
+              psRunningUserTime  
+              TimeTicks,
+              psRunningStartTime 
+              DateAndTime,
+              psRunningUID
+              Unsigned32,
+              psRunningUserName  
+              DisplayString,
+              psRunningDevice
+              DisplayString,
+              psRunningCommandLine   
+              DisplayString,
+              psRunningFilePath  
+              DisplayString,
+              psRunningCWD   
+              DisplayString,
+              psRunningPercentRSS
+              Integer32,
+              psRunningPercentSize  
+              Integer32
+}
+
+psRunningPID  OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The unique process identifier (PID) of this process."
+::= { psRunningEntry 1 }
+
+psRunningPGID OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The process group ID of this process, which is the PID of the process which started the logical group of processes to which this one belongs.  On platforms that don't have process groups, this will just be the PID."
+::= { psRunningEntry 2 }
+
+psRunningPPID               OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The PID of the parent process."
+::= { psRunningEntry 3 }
+
+psRunningName               OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The short process name, which is typically just the executable file's name without a path or arguments."
+::= { psRunningEntry 4 }
+
+psRunningState              OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The current state of this process:  kill(0), starting(1), suspended(2), sleeping(3), running(4), zombie(5)"
+::= { psRunningEntry 5 }
+
+psAge         OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Measure of how long process has been alive. Since Data TimeSeconds/Interval Not meaningful for this metric. % Change Not meaningful for this metric. Seconds/Sec Not meaningful for this metric. Seconds (default) Seconds that have elapsed since process was started."
+::= { psRunningEntry 6 }
+
+psRunningPriority           OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Unix-style static priority value.  On non-Unix systems, this will be a modified base priority value that follows the nice-value convention whereby:"
+::= { psRunningEntry 7 }
+
+psRunningSize               OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The total amount of memory allocated to this process in kilobytes."
+::= { psRunningEntry 8 }
+
+psRunningRSS                OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The portion of Size which is resident in physical (main) memory, in kilobytes."
+::= { psRunningEntry 9 }
+
+psRunningPageFaults         OBJECT-TYPE
+   SYNTAX     Counter32
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The total number of page faults (both hard/major and soft/minor) that this process has generated since starting."
+::= { psRunningEntry 10 }
+
+psRunningHardPageFaults     OBJECT-TYPE
+   SYNTAX     Counter32
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The total number of hard page faults that this process has generated since starting.  Hard page faults are those that require I/O (virtual memory access) to complete."
+::= { psRunningEntry 11 }
+
+psRunningContextSwitches    OBJECT-TYPE
+   SYNTAX     Counter32
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The total number of context switches this process has undergone."
+::= { psRunningEntry 12 }
+
+psRunningThreads            OBJECT-TYPE
+   SYNTAX     Gauge32
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The total number of threads that this process currently has."
+::= { psRunningEntry 13 }
+
+psRunningHandles            OBJECT-TYPE
+   SYNTAX     Gauge32
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The total number of operating system handles (or file descriptors on Unix) that this process currently has open."
+::= { psRunningEntry 14 }
+
+psRunningPercentCPU         OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "An approximation of the percentage of CPU time currently consumed by this process. This will take into account kernel and user time."
+::= { psRunningEntry 15 }
+
+psRunningKernelTime         OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The total amount of CPU time consumed in kernel calls for this process.  Note that this value can be more than real time on multi-CPU machines."
+::= { psRunningEntry 16 }
+
+psRunningUserTime           OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The total amount of CPU time consumed in user code (non-kernel code) for this process.  Note that this value can be more than real time on multi-CPU machines."
+::= { psRunningEntry 17 }
+
+psRunningStartTime          OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The time and date when this process started."
+::= { psRunningEntry 18 }
+
+psRunningUID  OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "User ID from system kernel for this process."
+::= { psRunningEntry 19 }
+
+psRunningUserName           OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The name of the user who owns this process."
+::= { psRunningEntry 20 }
+
+psRunningDevice             OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The name of the user interface device associated with this process."
+::= { psRunningEntry 21 }
+
+psRunningCommandLine        OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The exact command including parameters used to start this process."
+::= { psRunningEntry 22 }
+
+psRunningFilePath           OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The full path of the program file associated with this process."
+::= { psRunningEntry 23 }
+
+psRunningCWD                OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The full path of the process's current working directory, if it is known.  This can be useful in diagnosing problems with removing directories that are `busy'."
+::= { psRunningEntry 24 }
+
+psRunningPercentRSS         OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The percentage of physical memory occupied by the process's  resident set of pages. Note that this value is highly volatile and is in no way an indicator of memory requirements. PercentRSS can easily vary from 0 to 100 without the process allocating or freeing any memory. If you want a stable memory usage indicator look at psRunningPercentSize."
+::= { psRunningEntry 25 }
+
+psRunningPercentSize        OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The relative percentage of physical memory allocated to a process (not necessarily all resident). Values of &gt;100 are possible and they indicate that a process is using more than the physical amount of RAM available."
+::= { psRunningEntry 26 }
+
+jobProcessMasterTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF JobProcessMasterEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= {  jobProcess 1 }
+
+jobProcessMasterEntry OBJECT-TYPE
+              SYNTAX JobProcessMasterEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { jobProcessMasterIndex }
+              ::= { jobProcessMasterTable 1 }
+
+JobProcessMasterEntry ::=
+SEQUENCE {
+              jobProcessMasterIndex
+              Unsigned32,
+              jobProcessMasterID
+              DisplayString,
+              jobProcessMasterName
+              DisplayString,
+              jobProcessMasterDescription
+              DisplayString,
+              jobProcessMasterCreatedDate
+              DateAndTime,
+              jobProcessMasterCreatedUserID
+              DisplayString,
+              jobProcessMasterCreatedUserName
+              DisplayString,
+              jobProcessMasterPeriodicInterval
+              INTEGER,
+              jobProcessMasterStartTime
+              DateAndTime,
+              jobProcessMasterFinishTime
+              DateAndTime,
+              jobProcessMasterCPUPercentUsage
+              INTEGER,
+              jobProcessMasterMemoryPercentUsage
+              INTEGER,
+              jobProcessMasterStatus
+              RowStatus,
+              jobProcessMasterLastUpdatedDateAndTime
+              DateAndTime
+}
+
+jobProcessMasterIndex       OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { jobProcessMasterEntry 1 }
+
+jobProcessMasterID          OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Unique ID of Schedule. Text Characters "
+::= { jobProcessMasterEntry 2 }
+
+jobProcessMasterName        OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Schedule Name"
+::= { jobProcessMasterEntry 3 }
+
+jobProcessMasterDescription OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Textual schedule description"
+::= { jobProcessMasterEntry 4 }
+
+jobProcessMasterCreatedDate OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The date and time when the schedule was created."
+::= { jobProcessMasterEntry 5 }
+
+jobProcessMasterCreatedUserID             OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Schedule Created by User ID"
+::= { jobProcessMasterEntry 6 }
+
+jobProcessMasterCreatedUserName           OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Schedule Created by User Name"
+::= { jobProcessMasterEntry 7 }
+
+jobProcessMasterPeriodicInterval          OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Scheduler calling period of time. Once only(0), Daily(1), Weekly(2), Monthly(3) "
+::= { jobProcessMasterEntry 8 }
+
+jobProcessMasterStartTime   OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Job starting time per call"
+::= { jobProcessMasterEntry 9 }
+
+jobProcessMasterFinishTime  OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Job ending time per call"
+::= { jobProcessMasterEntry 10 }
+
+jobProcessMasterCPUPercentUsage           OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The average usage of CPU(%) during the scheduler being executed."
+::= { jobProcessMasterEntry 11 }
+
+jobProcessMasterMemoryPercentUsage        OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The average Memory usage(%)
+the physical memory usage to occupy during perfome"
+::= { jobProcessMasterEntry 12 }
+
+jobProcessMasterStatus      OBJECT-TYPE
+   SYNTAX     RowStatus
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Scheduler status, active(on), deactive(off)"
+::= { jobProcessMasterEntry 13 }
+
+jobProcessMasterLastUpdatedDateAndTime    OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Recently updated Date Time"
+::= { jobProcessMasterEntry 14 }
+
+JobProcessDetailTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF JobProcessDetailEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= {  jobProcess 2 }
+
+jobProcessDetailEntry OBJECT-TYPE
+              SYNTAX JobProcessDetailEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { jobProcessDetailIndex }
+              ::= { JobProcessDetailTable 1 }
+
+JobProcessDetailEntry ::=
+SEQUENCE {
+              jobProcessDetailIndex
+              Unsigned32,
+              jobProcessDetailMasterID
+              DisplayString,
+              jobProcessDetailScriptFile
+              DisplayString
+}
+
+jobProcessDetailIndex       OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { jobProcessDetailEntry 1 }
+
+jobProcessDetailMasterID    OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "jobProcessMasterID"
+::= { jobProcessDetailEntry 2 }
+
+jobProcessDetailScriptFile  OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute Path &amp; File Name of Origin script file contains list of files. If null ignoring and check the individual file(s) list"
+::= { jobProcessDetailEntry 3 }
+
+backupMasterTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF BackupMasterEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { backupManagement 1 }
+
+backupMasterEntry OBJECT-TYPE
+              SYNTAX BackupMasterEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { backupMasterIndex }
+              ::= { backupMasterTable 1 }
+
+BackupMasterEntry ::=
+SEQUENCE {
+              backupMasterIndex
+              Unsigned32,
+              backupMasterID
+              DisplayString,
+              backupMasterName
+              DisplayString,
+              backupMasterDescription
+              DisplayString,
+              backupMasterCreatedDate
+              DateAndTime,
+              backupMasterCreatedUserID
+              DisplayString,
+              backupMasterCreatedUserName
+              DisplayString,
+              backupMasterPeriodicInterval
+              INTEGER,
+              backupMasterStartTime
+              DateAndTime,
+              backupMasterFinishTime
+              DateAndTime,
+              backupMasterDestinationIPAddress
+              IpAddress,
+              backupMasterDestinationPath
+              DisplayString,
+              backupMasterCompressOption
+              INTEGER,
+              backupMasterStatus
+              RowStatus,
+              backupMasterLastUpdatedDateAndTime
+              DateAndTime
+}
+
+backupMasterIndex           OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { backupMasterEntry 1 }
+
+backupMasterID              OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Unique ID of backup. Text Characters "
+::= { backupMasterEntry 2 }
+
+backupMasterName            OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Backup Name in texture"
+::= { backupMasterEntry 3 }
+
+backupMasterDescription     OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Textual schedule description"
+::= { backupMasterEntry 4 }
+
+backupMasterCreatedDate     OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The date and time when the backup schedule was created."
+::= { backupMasterEntry 5 }
+
+backupMasterCreatedUserID   OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Backup Created by User ID"
+::= { backupMasterEntry 6 }
+
+backupMasterCreatedUserName OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Backup Created by User Name"
+::= { backupMasterEntry 7 }
+
+backupMasterPeriodicInterval              OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Scheduler calling period of time. Once only(0), Daily(1), Weekly(2), Monthly(3) "
+::= { backupMasterEntry 8 }
+
+backupMasterStartTime       OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Backup starting time per call"
+::= { backupMasterEntry 9 }
+
+backupMasterFinishTime      OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Backup ending time per call"
+::= { backupMasterEntry 10 }
+
+backupMasterDestinationIPAddress          OBJECT-TYPE
+   SYNTAX     IpAddress
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Target backing system's IP Address"
+::= { backupMasterEntry 11 }
+
+backupMasterDestinationPath OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Target backup Path to save"
+::= { backupMasterEntry 12 }
+
+backupMasterCompressOption  OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Compress option while moving file(s) to another location (0) Non compression (1)Compression"
+::= { backupMasterEntry 13 }
+
+backupMasterStatus          OBJECT-TYPE
+   SYNTAX     RowStatus
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Scheduler status, active(on), deactive(off)"
+::= { backupMasterEntry 14 }
+
+backupMasterLastUpdatedDateAndTime        OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Recently updated Date Time"
+::= { backupMasterEntry 15 }
+
+backupDetailTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF BackupDetailEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { backupManagement 2 }
+
+backupDetailEntry OBJECT-TYPE
+              SYNTAX BackupDetailEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { backupDetailIndex }
+              ::= { backupDetailTable 1 }
+
+BackupDetailEntry ::=
+SEQUENCE {
+              backupDetailIndex
+              Unsigned32,
+              backupDetailMasterID
+              DisplayString,
+              backupDetailFileLocation1
+              DisplayString,
+              backupDetailFileDescription1
+              DisplayString,
+              backupDetailFileLocation2
+              DisplayString,
+              backupDetailFileDescription2
+              DisplayString,
+              backupDetailFileLocation3
+              DisplayString,
+              backupDetailFileDescription3
+              DisplayString,
+              backupDetailFileLocation4
+              DisplayString,
+              backupDetailFileDescription4
+              DisplayString,
+              backupDetailFileLocation5
+              DisplayString,
+              backupDetailFileDescription5
+              DisplayString
+}
+
+backupDetailIndex           OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { backupDetailEntry 1 }
+
+backupDetailMasterID        OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "backupMasterID"
+::= { backupDetailEntry 2 }
+
+backupDetailFileLocation1   OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Description of Original file1"
+::= { backupDetailEntry 3 }
+
+backupDetailFileDescription1              OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute Path &amp; File Name of Origin to be Transferred from 1"
+::= { backupDetailEntry 4 }
+
+backupDetailFileLocation2   OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Description of Original file2"
+::= { backupDetailEntry 5 }
+
+backupDetailFileDescription2              OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute Path &amp; File Name of Origin to be Transferred from 2"
+::= { backupDetailEntry 6 }
+
+backupDetailFileLocation3   OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Description of Original file3"
+::= { backupDetailEntry 7 }
+
+backupDetailFileDescription3              OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute Path &amp; File Name of Origin to be Transferred from 3"
+::= { backupDetailEntry 8 }
+
+backupDetailFileLocation4   OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Description of Original file4"
+::= { backupDetailEntry 9 }
+
+backupDetailFileDescription4              OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute Path &amp; File Name of Origin to be Transferred from 4"
+::= { backupDetailEntry 10 }
+
+backupDetailFileLocation5   OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Description of Original file5"
+::= { backupDetailEntry 11 }
+
+backupDetailFileDescription5              OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute Path &amp; File Name of Origin to be Transferred from 5"
+::= { backupDetailEntry 12 }
+
+appMeteringTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF AppMeteringEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { Configuration 3 }
+
+appMeteringEntry OBJECT-TYPE
+              SYNTAX AppMeteringEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { appMeteringIndex }
+              ::= { appMeteringTable 1 }
+
+AppMeteringEntry ::=
+SEQUENCE {
+              appMeteringIndex
+              Unsigned32,
+              appMeteringID
+              DisplayString,
+              appMeteringName
+              DisplayString,
+              appMeteringDescription
+              DisplayString,
+              appMeteringCreatedDateTime
+              DateAndTime,
+              appMeteringCreatedUserID
+              DisplayString,
+              appMeteringCreatedUserName
+              DisplayString,
+              appMeteringStartTime
+              DateAndTime,
+              appMeteringEndTime
+              DateAndTime,
+              appMeteringReaction
+              INTEGER,
+              appMeteringStatus
+              RowStatus,
+              appMeteringLastUpdatedDateAndTime
+              DateAndTime,
+              appMeteringApplicationName
+              DisplayString,
+              appMeteringUserName
+              DisplayString,
+              appMeteringBinaryName
+              DisplayString,
+              appMeteringAlertMessage
+              DisplayString
+}
+
+appMeteringIndex            OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { appMeteringEntry 1 }
+
+appMeteringID OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Unique ID in System. Text Characters "
+::= { appMeteringEntry 2 }
+
+appMeteringName             OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Name in texture"
+::= { appMeteringEntry 3 }
+
+appMeteringDescription      OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Textual description"
+::= { appMeteringEntry 4 }
+
+appMeteringCreatedDateTime  OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "SWM Created Datetime"
+::= { appMeteringEntry 5 }
+
+appMeteringCreatedUserID    OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "SWM Created by User ID"
+::= { appMeteringEntry 6 }
+
+appMeteringCreatedUserName  OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "SWM Created by User Name"
+::= { appMeteringEntry 7 }
+
+appMeteringStartTime        OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "SWM starting time per call"
+::= { appMeteringEntry 8 }
+
+appMeteringEndTime          OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "SWM ending time per call"
+::= { appMeteringEntry 9 }
+
+appMeteringReaction         OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The option of not allowed software loaded into. 
+Warning message(0)
+Kill the process(1)
+Both(2)"
+::= { appMeteringEntry 10 }
+
+appMeteringStatus           OBJECT-TYPE
+   SYNTAX     RowStatus
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "SWMetering status, active(on), deactive(off)"
+::= { appMeteringEntry 11 }
+
+appMeteringLastUpdatedDateAndTime         OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Recently Updated Date Time"
+::= { appMeteringEntry 12 }
+
+appMeteringApplicationName  OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "A unique descriptive name for the application."
+::= { appMeteringEntry 13 }
+
+appMeteringUserName         OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The name of the user who started the application."
+::= { appMeteringEntry 14 }
+
+appMeteringBinaryName       OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The binary name of an application."
+::= { appMeteringEntry 15 }
+
+appMeteringAlertMessage     OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the alert message"
+::= { appMeteringEntry 16 }
+
+userAccessControlTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF UserAccessControlEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { userAccessControl 1 }
+
+userAccessControlEntry OBJECT-TYPE
+              SYNTAX UserAccessControlEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { userAccessControlIndex }
+              ::= { userAccessControlTable 1 }
+
+UserAccessControlEntry ::=
+SEQUENCE {
+              userAccessControlIndex
+              Unsigned32,
+              userAccessControlID
+              DisplayString,
+              userAccessControlPassword
+              DisplayString,
+              userAccessControlName
+              DisplayString,
+              userAccessControlDescription
+              DisplayString,
+              userAccessControlGroupId
+              INTEGER,
+              userAccessControlCreatedDate
+              DateAndTime,
+              userAccessControlUpdatedDate
+              DateAndTime,
+              userAccessControlStatus
+              RowStatus
+}
+
+userAccessControlIndex      OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { userAccessControlEntry 1 }
+
+userAccessControlID         OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "user id"
+::= { userAccessControlEntry 2 }
+
+userAccessControlPassword   OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "user password"
+::= { userAccessControlEntry 3 }
+
+userAccessControlName       OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "user name in Full"
+::= { userAccessControlEntry 4 }
+
+userAccessControlDescription              OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "textual description"
+::= { userAccessControlEntry 5 }
+
+userAccessControlGroupId    OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the group id of user"
+::= { userAccessControlEntry 6 }
+
+userAccessControlCreatedDate              OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "user created date"
+::= { userAccessControlEntry 7 }
+
+userAccessControlUpdatedDate              OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "user updated date recently"
+::= { userAccessControlEntry 8 }
+
+userAccessControlStatus     OBJECT-TYPE
+   SYNTAX     RowStatus
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "active/non active status flag"
+::= { userAccessControlEntry 9 }
+
+userGroupTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF UserGroupEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { userAccessControl 2 }
+
+userGroupEntry OBJECT-TYPE
+              SYNTAX UserGroupEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { userGroupIndex }
+              ::= { userGroupTable 1 }
+
+UserGroupEntry ::=
+SEQUENCE {
+              userGroupIndex
+              Unsigned32,
+              userGroupID
+              INTEGER,
+              userGroupName
+              DisplayString,
+              userGroupDescription
+              DisplayString,
+              userGroupStatus
+              RowStatus
+}
+
+userGroupIndex              OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { userGroupEntry 1 }
+
+userGroupID   OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Group ID"
+::= { userGroupEntry 2 }
+
+userGroupName OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Group name in alias"
+::= { userGroupEntry 3 }
+
+userGroupDescription        OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Group Description. Privilage Description"
+::= { userGroupEntry 4 }
+
+userGroupStatus             OBJECT-TYPE
+   SYNTAX     RowStatus
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "active/non active status flag"
+::= { userGroupEntry 5 }
+
+allowTelnetTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF AllowTelnetEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { userAccessControl 3 }
+
+allowTelnetEntry OBJECT-TYPE
+              SYNTAX AllowTelnetEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { allowTelenetIndex }
+              ::= { allowTelnetTable 1 }
+
+AllowTelnetEntry ::=
+SEQUENCE {
+              allowTelenetIndex
+              Unsigned32,
+              allowTelenetID
+              DisplayString,
+              allowTelenetIPAddress
+              OCTET STRING,
+              allowTelenetPortNo
+              INTEGER,
+              allowTelnetStatus
+              RowStatus
+}
+
+allowTelenetIndex           OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { allowTelnetEntry 1 }
+
+allowTelenetID              OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Allowing User ID through telnet"
+::= { allowTelnetEntry 2 }
+
+allowTelenetIPAddress       OBJECT-TYPE
+   SYNTAX     OCTET STRING
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Allowing IP address through telnet"
+::= { allowTelnetEntry 3 }
+
+allowTelenetPortNo          OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Telnet poprtNo"
+::= { allowTelnetEntry 4 }
+
+allowTelnetStatus           OBJECT-TYPE
+   SYNTAX     RowStatus
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "active/non active status flag"
+::= { allowTelnetEntry 5 }
+
+allowFTPTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF AllowFTPEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { userAccessControl 4 }
+
+allowFTPEntry OBJECT-TYPE
+              SYNTAX AllowFTPEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { allowFTPIndex }
+              ::= { allowFTPTable 1 }
+
+AllowFTPEntry ::=
+SEQUENCE {
+              allowFTPIndex
+              Unsigned32,
+              allowFTPID
+              DisplayString,
+              allowFTPIPAddress
+              OCTET STRING,
+              allowFTPPortNo
+              INTEGER,
+              allowFTPStatus
+              RowStatus
+}
+
+allowFTPIndex OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { allowFTPEntry 1 }
+
+allowFTPID    OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Allowing User ID through FTP"
+::= { allowFTPEntry 2 }
+
+allowFTPIPAddress           OBJECT-TYPE
+   SYNTAX     OCTET STRING
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Allowing IP address through FTP"
+::= { allowFTPEntry 3 }
+
+allowFTPPortNo              OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "FTP poprtNo"
+::= { allowFTPEntry 4 }
+
+allowFTPStatus              OBJECT-TYPE
+   SYNTAX     RowStatus
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "active/non active status flag"
+::= { allowFTPEntry 5 }
+
+allowSMTPTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF AllowSMTPEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { userAccessControl 5 }
+
+allowSMTPEntry OBJECT-TYPE
+              SYNTAX AllowSMTPEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { allowSMTPIndex }
+              ::= { allowSMTPTable 1 }
+
+AllowSMTPEntry ::=
+SEQUENCE {
+              allowSMTPIndex
+              Unsigned32,
+              allowSMTPID
+              DisplayString,
+              allowSMTPIPAddress
+              OCTET STRING,
+              allowSMTPPortNo
+              INTEGER,
+              allowSMTPStatus
+              RowStatus
+}
+
+allowSMTPIndex              OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { allowSMTPEntry 1 }
+
+allowSMTPID   OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Allowing User ID through SMTP"
+::= { allowSMTPEntry 2 }
+
+allowSMTPIPAddress          OBJECT-TYPE
+   SYNTAX     OCTET STRING
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Allowing IP address through SMTP"
+::= { allowSMTPEntry 3 }
+
+allowSMTPPortNo             OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "SMTP poprtNo"
+::= { allowSMTPEntry 4 }
+
+allowSMTPStatus             OBJECT-TYPE
+   SYNTAX     RowStatus
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "active/non active status flag"
+::= { allowSMTPEntry 5 }
+
+allowPOP3Table OBJECT-TYPE
+              SYNTAX SEQUENCE OF AllowPOP3Entry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { userAccessControl 6 }
+
+allowPOP3Entry OBJECT-TYPE
+              SYNTAX AllowPOP3Entry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { allowPOP3Index }
+              ::= { allowPOP3Table 1 }
+
+AllowPOP3Entry ::=
+SEQUENCE {
+              allowPOP3Index
+              Unsigned32,
+              allowPOP3ID
+              DisplayString,
+              allowPOP3IPAddress
+              OCTET STRING,
+              allowPOP3PortNo
+              INTEGER,
+              allowPOP3Status
+              RowStatus
+}
+
+allowPOP3Index              OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { allowPOP3Entry 1 }
+
+allowPOP3ID   OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Allowing User ID through POP3"
+::= { allowPOP3Entry 2 }
+
+allowPOP3IPAddress          OBJECT-TYPE
+   SYNTAX     OCTET STRING
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Allowing IP address through POP3"
+::= { allowPOP3Entry 3 }
+
+allowPOP3PortNo             OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "POP3 poprtNo"
+::= { allowPOP3Entry 4 }
+
+allowPOP3Status             OBJECT-TYPE
+   SYNTAX     RowStatus
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "active/non active status flag"
+::= { allowPOP3Entry 5 }
+
+masterSNMPAgentIP           OBJECT-TYPE
+   SYNTAX     IpAddress
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "master agent ip address"
+::= {  snmp 1 }
+
+masterSNMPAgentPort         OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "master agent listen port"
+::= {  snmp 2 }
+
+systemSNMPAgentIP           OBJECT-TYPE
+   SYNTAX     IpAddress
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "system agent ip address"
+::= {  snmp 3 }
+
+systemSNMPAgentPort         OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "system agent listen port"
+::= {  snmp 4 }
+
+systemSNMPOID OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the proper oid(3204) of nas sub agent"
+::= {  snmp 5 }
+
+appSNMPAgentIP1             OBJECT-TYPE
+   SYNTAX     IpAddress
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "application agent1 ip address"
+::= {  snmp 6 }
+
+appSNMPAgentPort1           OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "application agent1 listen port"
+::= {  snmp 7 }
+
+appSNMPTrapPort1            OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "application agent1 trap port"
+::= {  snmp 8 }
+
+appSNMPAgentOID1            OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the proper oid of application SNMP agent1"
+::= {  snmp 9 }
+
+appSNMPAgentIP2             OBJECT-TYPE
+   SYNTAX     IpAddress
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "application agent2 ip address"
+::= {  snmp 10 }
+
+appSNMPAgentPort2           OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "application agent2 listen port"
+::= {  snmp 11 }
+
+appSNMPTrapPort2            OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "application agent2 trap port"
+::= {  snmp 12 }
+
+appSNMPAgentOID2            OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the proper oid of application SNMP agent2"
+::= {  snmp 13 }
+
+appSNMPAgentIP3             OBJECT-TYPE
+   SYNTAX     IpAddress
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "application agent3 ip address"
+::= {  snmp 14 }
+
+appSNMPAgentPort3           OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "application agent3 listen port"
+::= {  snmp 15 }
+
+appSNMPTrapPort3            OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "application agent3 trap port"
+::= {  snmp 16 }
+
+appSNMPAgentOID3            OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the proper oid of application SNMP agent3"
+::= {  snmp 17 }
+
+appSNMPAgentIP4             OBJECT-TYPE
+   SYNTAX     IpAddress
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "application agent4 ip address"
+::= {  snmp 18 }
+
+appSNMPAgentPort4           OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "application agent4 listen port"
+::= {  snmp 19 }
+
+appSNMPTrapPort4            OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "application agent4 trap port"
+::= {  snmp 20 }
+
+appSNMPAgentOID4            OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the proper oid of application SNMP agent4"
+::= {  snmp 21 }
+
+appSNMPAgentIP5             OBJECT-TYPE
+   SYNTAX     IpAddress
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "application agent5 ip address"
+::= {  snmp 22 }
+
+appSNMPAgentPort5           OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "application agent5 listen port"
+::= {  snmp 23 }
+
+appSNMPTrapPort5            OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "application agent5 trap port"
+::= {  snmp 24 }
+
+appSNMPAgentOID5            OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the proper oid of application SNMP agent5"
+::= {  snmp 25 }
+
+icpTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF IcpEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { Configuration 6 }
+
+icpEntry OBJECT-TYPE
+              SYNTAX IcpEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { icpIndex }
+              ::= { icpTable 1 }
+
+IcpEntry ::=
+SEQUENCE {
+              icpIndex
+              Unsigned32,
+              icpUserId
+              DisplayString,
+              icpCommand
+              DisplayString,
+              icpStatus
+              RowStatus
+}
+
+icpIndex      OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { icpEntry 1 }
+
+icpUserId     OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "User Id"
+::= { icpEntry 2 }
+
+icpCommand    OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute path and command(included parameter) to prevent excution"
+::= { icpEntry 3 }
+
+icpStatus     OBJECT-TYPE
+   SYNTAX     RowStatus
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "active/non active status flag"
+::= { icpEntry 4 }
+
+monitorPolicyTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF MonitorPolicyEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { Policy 1 }
+
+monitorPolicyEntry OBJECT-TYPE
+              SYNTAX MonitorPolicyEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { monitorPolicyIndex }
+              ::= { monitorPolicyTable 1 }
+
+MonitorPolicyEntry ::=
+SEQUENCE {
+              monitorPolicyIndex
+              Unsigned32,
+              monitorPolicyID
+              Unsigned32,
+              monitorPolicyName
+              DisplayString,
+              monitorPolicyDescription
+              DisplayString,
+              monitorPolicyContructor
+              DisplayString,
+              monitorPolicyCreateDate
+              DateAndTime,
+              monitorPolicyVariable1
+              OBJECT IDENTIFIER,
+              monitorPolicyExpression1
+              INTEGER,
+              monitorPolicyValue1
+              INTEGER,
+              monitorPolicyOperation1
+              INTEGER,
+              monitorPolicyVariable2
+              OBJECT IDENTIFIER,
+              monitorPolicyExpression2
+              INTEGER,
+              monitorPolicyValue2
+              INTEGER,
+              monitorPolicyOperation2
+              INTEGER,
+              monitorPolicyVariable3
+              OBJECT IDENTIFIER,
+              monitorPolicyExpression3
+              INTEGER,
+              monitorPolicyValue3
+              INTEGER,
+              monitorPolicyOperation3
+              INTEGER,
+              monitorPolicyVariable4
+              OBJECT IDENTIFIER,
+              monitorPolicyExpression4
+              INTEGER,
+              monitorPolicyValue4
+              INTEGER,
+              monitorPolicyOperation4
+              INTEGER,
+              monitorPolicyVariable5
+              OBJECT IDENTIFIER,
+              monitorPolicyExpression5
+              INTEGER,
+              monitorPolicyValue5
+              INTEGER,
+              monitorPolicyLevel
+              INTEGER,
+              monitorPolicySMS
+              TruthValue,
+              monitorPolicyPopup
+              TruthValue,
+              monitorPolicyEmail
+              TruthValue,
+              monitorPolicyPSTN
+              TruthValue,
+              monitorPolicyCommand
+              DisplayString,
+              monitorPolicyScript
+              DisplayString,
+              monitorPolicyAlertMessage
+              DisplayString,
+              monitorPolicyStatus
+              RowStatus
+}
+
+monitorPolicyIndex          OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { monitorPolicyEntry 1 }
+
+monitorPolicyID             OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "policy id"
+::= { monitorPolicyEntry 2 }
+
+monitorPolicyName           OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the name of policy"
+::= { monitorPolicyEntry 3 }
+
+monitorPolicyDescription    OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "textual description"
+::= { monitorPolicyEntry 4 }
+
+monitorPolicyContructor     OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "a user name to create this row"
+::= { monitorPolicyEntry 5 }
+
+monitorPolicyCreateDate     OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the date and time to be created this row"
+::= { monitorPolicyEntry 6 }
+
+monitorPolicyVariable1      OBJECT-TYPE
+   SYNTAX     OBJECT IDENTIFIER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "a variable of MIB"
+::= { monitorPolicyEntry 7 }
+
+monitorPolicyExpression1    OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "&lt;(0), &gt;(1), &lt;=(2), &gt;=(3), &lt;&gt;(4), ==(5)"
+::= { monitorPolicyEntry 8 }
+
+monitorPolicyValue1         OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "a threshold value"
+::= { monitorPolicyEntry 9 }
+
+monitorPolicyOperation1     OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "AND(0), OR(1)"
+::= { monitorPolicyEntry 10 }
+
+monitorPolicyVariable2      OBJECT-TYPE
+   SYNTAX     OBJECT IDENTIFIER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "a variable of MIB"
+::= { monitorPolicyEntry 11 }
+
+monitorPolicyExpression2    OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "&lt;(0), &gt;(1), &lt;=(2), &gt;=(3), &lt;&gt;(4), ==(5)"
+::= { monitorPolicyEntry 12 }
+
+monitorPolicyValue2         OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "a threshold value"
+::= { monitorPolicyEntry 13 }
+
+monitorPolicyOperation2     OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "AND(0), OR(1)"
+::= { monitorPolicyEntry 14 }
+
+monitorPolicyVariable3      OBJECT-TYPE
+   SYNTAX     OBJECT IDENTIFIER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "a variable of MIB"
+::= { monitorPolicyEntry 15 }
+
+monitorPolicyExpression3    OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "&lt;(0), &gt;(1), &lt;=(2), &gt;=(3), &lt;&gt;(4), ==(5)"
+::= { monitorPolicyEntry 16 }
+
+monitorPolicyValue3         OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "a threshold value"
+::= { monitorPolicyEntry 17 }
+
+monitorPolicyOperation3     OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "AND(0), OR(1)"
+::= { monitorPolicyEntry 18 }
+
+monitorPolicyVariable4      OBJECT-TYPE
+   SYNTAX     OBJECT IDENTIFIER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "a variable of MIB"
+::= { monitorPolicyEntry 19 }
+
+monitorPolicyExpression4    OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "&lt;(0), &gt;(1), &lt;=(2), &gt;=(3), &lt;&gt;(4), ==(5)"
+::= { monitorPolicyEntry 20 }
+
+monitorPolicyValue4         OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "a threshold value"
+::= { monitorPolicyEntry 21 }
+
+monitorPolicyOperation4     OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "AND(0), OR(1)"
+::= { monitorPolicyEntry 22 }
+
+monitorPolicyVariable5      OBJECT-TYPE
+   SYNTAX     OBJECT IDENTIFIER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "a variable of MIB"
+::= { monitorPolicyEntry 23 }
+
+monitorPolicyExpression5    OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "&lt;(0), &gt;(1), &lt;=(2), &gt;=(3), &lt;&gt;(4), ==(5)"
+::= { monitorPolicyEntry 24 }
+
+monitorPolicyValue5         OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "a threshold value"
+::= { monitorPolicyEntry 25 }
+
+monitorPolicyLevel          OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "warning(0), minor(1), normal(2), major(3), critical(4)"
+::= { monitorPolicyEntry 26 }
+
+monitorPolicySMS            OBJECT-TYPE
+   SYNTAX     TruthValue
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "true(1), false(0)"
+::= { monitorPolicyEntry 27 }
+
+monitorPolicyPopup          OBJECT-TYPE
+   SYNTAX     TruthValue
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "true(1), false(0)"
+::= { monitorPolicyEntry 28 }
+
+monitorPolicyEmail          OBJECT-TYPE
+   SYNTAX     TruthValue
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "true(1), false(0)"
+::= { monitorPolicyEntry 29 }
+
+monitorPolicyPSTN           OBJECT-TYPE
+   SYNTAX     TruthValue
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "true(1), false(0)"
+::= { monitorPolicyEntry 30 }
+
+monitorPolicyCommand        OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "a command included absolute path"
+::= { monitorPolicyEntry 31 }
+
+monitorPolicyScript         OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "a script filename included absolute path"
+::= { monitorPolicyEntry 32 }
+
+monitorPolicyAlertMessage   OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the alert message"
+::= { monitorPolicyEntry 33 }
+
+monitorPolicyStatus         OBJECT-TYPE
+   SYNTAX     RowStatus
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "SNMPv2 Row Status. Controls creation, activation and deletion of the control row."
+::= { monitorPolicyEntry 34 }
+
+logMonColumnTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF LogMonColumnEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= {  LogMon 1 }
+
+logMonColumnEntry OBJECT-TYPE
+              SYNTAX LogMonColumnEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { logMonColumnIndex }
+              ::= { logMonColumnTable 1 }
+
+LogMonColumnEntry ::=
+SEQUENCE {
+              logMonColumnIndex
+              Unsigned32,
+              logMonColumnLogFile
+              DisplayString,
+              logMonColumnReadInterval
+              INTEGER,
+              logMonColumnCol1
+              INTEGER,
+              logMonColumnCol2
+              INTEGER,
+              logMonColumnCol3
+              INTEGER,
+              logMonColumnCol4
+              INTEGER,
+              logMonColumnCol5
+              INTEGER,
+              logMonColumnColFilter1
+              DisplayString,
+              logMonColumnColFilter2
+              DisplayString,
+              logMonColumnColFilter3
+              DisplayString,
+              logMonColumnColFilter4
+              DisplayString,
+              logMonColumnColFilter5
+              DisplayString,
+              logMonColumnCreatedTime
+              DateAndTime,
+              logMonColumnDescription
+              DisplayString,
+              logMonColumnAlertMessage
+              DisplayString,
+              logMonColumnStatus
+              RowStatus,
+              logMonColumnUpdatedTime
+              DateAndTime,
+              logMonColumnFileSize
+              INTEGER,
+              logMonColumnReadLine
+              INTEGER
+}
+
+logMonColumnIndex           OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "Uniquely identifies this row in the logMonColumn."
+::= { logMonColumnEntry 1 }
+
+logMonColumnLogFile         OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute path to the log file being monitored."
+::= { logMonColumnEntry 2 }
+
+logMonColumnReadInterval    OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Interval in seconds at which a check should be made on the log file for any additions."
+::= { logMonColumnEntry 3 }
+
+logMonColumnCol1            OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "A column length"
+::= { logMonColumnEntry 4 }
+
+logMonColumnCol2            OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "A column length"
+::= { logMonColumnEntry 5 }
+
+logMonColumnCol3            OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "A column length"
+::= { logMonColumnEntry 6 }
+
+logMonColumnCol4            OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "A column length"
+::= { logMonColumnEntry 7 }
+
+logMonColumnCol5            OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "A column length"
+::= { logMonColumnEntry 8 }
+
+logMonColumnColFilter1      OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "A regular expression for logMonColumnCol1"
+::= { logMonColumnEntry 9 }
+
+logMonColumnColFilter2      OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "A regular expression for logMonColumnCol2"
+::= { logMonColumnEntry 10 }
+
+logMonColumnColFilter3      OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "A regular expression for logMonColumnCol3"
+::= { logMonColumnEntry 11 }
+
+logMonColumnColFilter4      OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "A regular expression for logMonColumnCol4"
+::= { logMonColumnEntry 12 }
+
+logMonColumnColFilter5      OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "A regular expression for logMonColumnCol5"
+::= { logMonColumnEntry 13 }
+
+logMonColumnCreatedTime     OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The value of sysUpTime when this entry was last activated.  This can be used by the management station to ensure that the entry has not been deleted and recreated between polls."
+::= { logMonColumnEntry 14 }
+
+logMonColumnDescription     OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "A description of this row."
+::= { logMonColumnEntry 15 }
+
+logMonColumnAlertMessage    OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the alert message"
+::= { logMonColumnEntry 16 }
+
+logMonColumnStatus          OBJECT-TYPE
+   SYNTAX     RowStatus
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The status of this row. An entry may not exist in the active state unless all objects in the entry have an appropriate value."
+::= { logMonColumnEntry 17 }
+
+logMonColumnUpdatedTime     OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The value of sysUpTime when this row was added to the logMonColumnTable."
+::= { logMonColumnEntry 18 }
+
+logMonColumnFileSize        OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Size of the log file the last time it was checked."
+::= { logMonColumnEntry 19 }
+
+logMonColumnReadLine        OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "A line number of the log file that readed"
+::= { logMonColumnEntry 20 }
+
+logMonRowTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF LogMonRowEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= {  LogMon 2 }
+
+logMonRowEntry OBJECT-TYPE
+              SYNTAX LogMonRowEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { logMonRowIndex }
+              ::= { logMonRowTable 1 }
+
+LogMonRowEntry ::=
+SEQUENCE {
+              logMonRowIndex
+              Unsigned32,
+              logMonRowLogFile
+              DisplayString,
+              logMonRowReadInterval
+              INTEGER,
+              logMonRowFilter
+              DisplayString,
+              logMonRowDescription
+              DisplayString,
+              logMonRowCreatedTime
+              DateAndTime,
+              logMonRowAlertMessage
+              DisplayString,
+              logMonRowStatus
+              RowStatus,
+              logMonRowUpdatedTime
+              DateAndTime,
+              logMonRowLine
+              INTEGER,
+              logMonRowGetLine
+              INTEGER,
+              logMonRowFileSize
+              INTEGER,
+              logMonRowReadLine
+              INTEGER
+}
+
+logMonRowIndex              OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "Uniquely identifies this row in the logMonRow."
+::= { logMonRowEntry 1 }
+
+logMonRowLogFile            OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute path to the log file being monitored."
+::= { logMonRowEntry 2 }
+
+logMonRowReadInterval       OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Interval in seconds at which a check should be made on the log file for any additions."
+::= { logMonRowEntry 3 }
+
+logMonRowFilter             OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "A regular expression defining lines that should appear in the logMonRowTable."
+::= { logMonRowEntry 4 }
+
+logMonRowDescription        OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "A description of the control row."
+::= { logMonRowEntry 5 }
+
+logMonRowCreatedTime        OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "logMonRow Created Data Time"
+::= { logMonRowEntry 6 }
+
+logMonRowAlertMessage       OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the alert message"
+::= { logMonRowEntry 7 }
+
+logMonRowStatus             OBJECT-TYPE
+   SYNTAX     RowStatus
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The status of this row. An entry may not exist in the active state unless all objects in the entry have an appropriate value."
+::= { logMonRowEntry 8 }
+
+logMonRowUpdatedTime        OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The value of sysUpTime when this row was added to the logMonRowTable."
+::= { logMonRowEntry 9 }
+
+logMonRowLine OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "A line from the log file that matched the filter in this entry's associated control row."
+::= { logMonRowEntry 10 }
+
+logMonRowGetLine            OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "get lines of string from monitoring log file."
+::= { logMonRowEntry 11 }
+
+logMonRowFileSize           OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Size of the log file the last time it was checked."
+::= { logMonRowEntry 12 }
+
+logMonRowReadLine           OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "A line number of the log file that readed"
+::= { logMonRowEntry 13 }
+
+psMonitorTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF PsMonitorEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { Policy  3 }
+
+psMonitorEntry OBJECT-TYPE
+              SYNTAX PsMonitorEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { psMonitorIndex }
+              ::= { psMonitorTable 1 }
+
+PsMonitorEntry ::=
+SEQUENCE {
+              psMonitorIndex
+              Unsigned32,
+              psMonitorName
+              DisplayString,
+              psMonitorParameter
+              DisplayString,
+              psMonitorNumber
+              INTEGER,
+              psMonitorCheckInterval
+              INTEGER,
+              psMonitorFilter
+              DisplayString,
+              psMonitorDescription
+              DisplayString,
+              psMonitorCreatedDateTime
+              DateAndTime,
+              psMonitorReaction
+              INTEGER,
+              psMonitorReactionPath
+              DisplayString,
+              psMonitorAlertMessage
+              DisplayString,
+              psMonitorStatus
+              RowStatus
+}
+
+psMonitorIndex              OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "Uniquely identifies this row in the Row"
+::= { psMonitorEntry 1 }
+
+psMonitorName OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Name of Process to be monitored for up and running"
+::= { psMonitorEntry 2 }
+
+psMonitorParameter          OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The parameters of process"
+::= { psMonitorEntry 3 }
+
+psMonitorNumber             OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The number of the same processes"
+::= { psMonitorEntry 4 }
+
+psMonitorCheckInterval      OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Interval in seconds at which a check should be made"
+::= { psMonitorEntry 5 }
+
+psMonitorFilter             OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "A regular expression defining lines that should appear in the ProcessMonTable. NULL"
+::= { psMonitorEntry 6 }
+
+psMonitorDescription        OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "A description of the monitoring Process"
+::= { psMonitorEntry 7 }
+
+psMonitorCreatedDateTime    OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "The value of sysUpTime when this row was added."
+::= { psMonitorEntry 8 }
+
+psMonitorReaction           OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Alert(1), Restart(2), Both(3)"
+::= { psMonitorEntry 9 }
+
+psMonitorReactionPath       OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute Path of file to run(Usually restart) the Process with Parameter(s)."
+::= { psMonitorEntry 10 }
+
+psMonitorAlertMessage       OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the alert message"
+::= { psMonitorEntry 11 }
+
+psMonitorStatus             OBJECT-TYPE
+   SYNTAX     RowStatus
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "active/non active status flag"
+::= { psMonitorEntry 12 }
+
+trapTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF TrapEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { Policy  4 }
+
+trapEntry OBJECT-TYPE
+              SYNTAX TrapEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { trapIndex }
+              ::= { trapTable 1 }
+
+TrapEntry ::=
+SEQUENCE {
+              trapIndex
+              Unsigned32,
+              trapPolicyId
+              Unsigned32,
+              trapType
+              INTEGER,
+              trapVariable
+              OBJECT IDENTIFIER,
+              trapExpression
+              INTEGER,
+              trapValue
+              INTEGER,
+              trapDescription
+              DisplayString,
+              trapDestinationIP
+              IpAddress,
+              trapPort
+              INTEGER,
+              trapTransport
+              INTEGER,
+              trapMessage
+              DisplayString,
+              trapStatus
+              RowStatus
+}
+
+trapIndex     OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { trapEntry 1 }
+
+trapPolicyId  OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "monitorPolicyID"
+::= { trapEntry 2 }
+
+trapType      OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "system resource(1), process(2), log(3)"
+::= { trapEntry 3 }
+
+trapVariable  OBJECT-TYPE
+   SYNTAX     OBJECT IDENTIFIER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "a variable of MIB"
+::= { trapEntry 4 }
+
+trapExpression              OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "&lt;(0), &gt;(1), &lt;=(2), &gt;=(3), &lt;&gt;(4), ==(5)"
+::= { trapEntry 5 }
+
+trapValue     OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "a threshold value"
+::= { trapEntry 6 }
+
+trapDescription             OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "textual description"
+::= { trapEntry 7 }
+
+trapDestinationIP           OBJECT-TYPE
+   SYNTAX     IpAddress
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "IP adress to send trap message"
+::= { trapEntry 8 }
+
+trapPort      OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Port of server to send trap message"
+::= { trapEntry 9 }
+
+trapTransport OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "TCP(0), UDP(1)"
+::= { trapEntry 10 }
+
+trapMessage   OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "a trap message"
+::= { trapEntry 11 }
+
+trapStatus    OBJECT-TYPE
+   SYNTAX     RowStatus
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "SNMPv2 Row Status. Controls creation, activation and deletion of the control row."
+::= { trapEntry 12 }
+
+collectDataTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF CollectDataEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { Policy  5 }
+
+collectDataEntry OBJECT-TYPE
+              SYNTAX CollectDataEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { collectDataIndex }
+              ::= { collectDataTable 1 }
+
+CollectDataEntry ::=
+SEQUENCE {
+              collectDataIndex
+              Unsigned32,
+              collectDataType
+              INTEGER,
+              collectDataVariable
+              OBJECT IDENTIFIER,
+              collectDataStartDate
+              DateAndTime,
+              collectDataEndDate
+              DateAndTime,
+              collectDataMonStartTime
+              TimeTicks,
+              collectDataMonEndTime
+              TimeTicks,
+              collectDataMonFrequent
+              INTEGER,
+              collectDataTueStartTime
+              TimeTicks,
+              collectDataTueEndTime
+              TimeTicks,
+              collectDataTueFrequent
+              INTEGER,
+              collectDataWebStartTime
+              TimeTicks,
+              collectDataWebEndTime
+              TimeTicks,
+              collectDataWebFrequent
+              INTEGER,
+              collectDataThuStartTime
+              TimeTicks,
+              collectDataThuEndTime
+              TimeTicks,
+              collectDataThuFrequent
+              INTEGER,
+              collectDataFriStartTime
+              TimeTicks,
+              collectDataFriEndTime
+              TimeTicks,
+              collectDataFriFrequent
+              INTEGER,
+              collectDataSatStartTime
+              TimeTicks,
+              collectDataSatEndTime
+              TimeTicks,
+              collectDataSatFrequent
+              INTEGER,
+              collectDataSunStartTime
+              TimeTicks,
+              collectDataSunEndTime
+              TimeTicks,
+              collectDataSunFrequent
+              INTEGER,
+              collectDataStatus
+              RowStatus
+}
+
+collectDataIndex            OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "unique identifier(0~65536)"
+::= { collectDataEntry 1 }
+
+collectDataType             OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "system resource(1), process(2), log(3)"
+::= { collectDataEntry 2 }
+
+collectDataVariable         OBJECT-TYPE
+   SYNTAX     OBJECT IDENTIFIER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "a variable of MIB"
+::= { collectDataEntry 3 }
+
+collectDataStartDate        OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to start collect of data"
+::= { collectDataEntry 4 }
+
+collectDataEndDate          OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to end collect of data"
+::= { collectDataEntry 5 }
+
+collectDataMonStartTime     OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to start collect of data in Monday"
+::= { collectDataEntry 6 }
+
+collectDataMonEndTime       OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to end collect of data in Monday"
+::= { collectDataEntry 7 }
+
+collectDataMonFrequent      OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the interval in seconds( in Monday )"
+::= { collectDataEntry 8 }
+
+collectDataTueStartTime     OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to start collect of data in Tuesday"
+::= { collectDataEntry 9 }
+
+collectDataTueEndTime       OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to end collect of data in Tuesday"
+::= { collectDataEntry 10 }
+
+collectDataTueFrequent      OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the interval in seconds( in Tuesday )"
+::= { collectDataEntry 11 }
+
+collectDataWebStartTime     OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to start collect of data in Wednesday"
+::= { collectDataEntry 12 }
+
+collectDataWebEndTime       OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to end collect of data in Wednesday"
+::= { collectDataEntry 13 }
+
+collectDataWebFrequent      OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the interval in seconds( in Wednesday )"
+::= { collectDataEntry 14 }
+
+collectDataThuStartTime     OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to start collect of data in Thursday"
+::= { collectDataEntry 15 }
+
+collectDataThuEndTime       OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to end collect of data in Thursday"
+::= { collectDataEntry 16 }
+
+collectDataThuFrequent      OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the interval in seconds( in Thursday )"
+::= { collectDataEntry 17 }
+
+collectDataFriStartTime     OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to start collect of data in Friday"
+::= { collectDataEntry 18 }
+
+collectDataFriEndTime       OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to end collect of data in Friday"
+::= { collectDataEntry 19 }
+
+collectDataFriFrequent      OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the interval in seconds( in Friday )"
+::= { collectDataEntry 20 }
+
+collectDataSatStartTime     OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to start collect of data in Saturday"
+::= { collectDataEntry 21 }
+
+collectDataSatEndTime       OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to end collect of data in Saturday"
+::= { collectDataEntry 22 }
+
+collectDataSatFrequent      OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the interval in seconds( in Saturday )"
+::= { collectDataEntry 23 }
+
+collectDataSunStartTime     OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to start collect of data in Sunday"
+::= { collectDataEntry 24 }
+
+collectDataSunEndTime       OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the time to end collect of data in Sunday"
+::= { collectDataEntry 25 }
+
+collectDataSunFrequent      OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the interval in seconds( in Sunday )"
+::= { collectDataEntry 26 }
+
+collectDataStatus           OBJECT-TYPE
+   SYNTAX     RowStatus
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "SNMPv2 Row Status. Controls creation, activation and deletion of the control row."
+::= { collectDataEntry 27 }
+
+monitorPriorityTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF MonitorPriorityEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { Policy  6 }
+
+monitorPriorityEntry OBJECT-TYPE
+              SYNTAX MonitorPriorityEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { monitorPriorityIndex }
+              ::= { monitorPriorityTable 1 }
+
+MonitorPriorityEntry ::=
+SEQUENCE {
+              monitorPriorityIndex
+              Unsigned32,
+              monitorPriorityVariable
+              OBJECT IDENTIFIER,
+              monitorPriorityInterval
+              INTEGER,
+              monitorPriorityStatus
+              RowStatus,
+              monitorPriorityUpdatedDateAndTime
+              DateAndTime,
+              monitorPriorityUpdatedUser
+              DisplayString
+}
+
+monitorPriorityIndex        OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "Unique Monitoring priority Index "
+::= { monitorPriorityEntry 1 }
+
+monitorPriorityVariable     OBJECT-TYPE
+   SYNTAX     OBJECT IDENTIFIER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Moitoring System Variable object id in MIB Definition"
+::= { monitorPriorityEntry 2 }
+
+monitorPriorityInterval     OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Less timetick gets higher priority"
+::= { monitorPriorityEntry 3 }
+
+monitorPriorityStatus       OBJECT-TYPE
+   SYNTAX     RowStatus
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "SNMPv2 Row Status. Controls creation, activation and deletion of the control row."
+::= { monitorPriorityEntry 4 }
+
+monitorPriorityUpdatedDateAndTime         OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Monitoring Priority Recently Updated Date And Time"
+::= { monitorPriorityEntry 5 }
+
+monitorPriorityUpdatedUser  OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Monitoring Priority Recently Updated User Name"
+::= { monitorPriorityEntry 6 }
+
+agentInfoIP   OBJECT-TYPE
+   SYNTAX     IpAddress
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the agent ip address"
+::= { AgentInfo 1 }
+
+agentInfoName OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the name of agent(NASCenter)"
+::= { AgentInfo 2 }
+
+agentInfoSerialNo           OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "unique Nascenter number"
+::= { AgentInfo 3 }
+
+agentInfoAlertManagerIP     OBJECT-TYPE
+   SYNTAX     IpAddress
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the ip address to the manager(server)"
+::= { AgentInfo 4 }
+
+agentInfoAlertManagerPortNo OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the portNo to the manager(server)"
+::= { AgentInfo 5 }
+
+agentInfoInstallDate        OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the date to be installed agent"
+::= { AgentInfo 6 }
+
+agentInfoOS   OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "OS version"
+::= { AgentInfo 7 }
+
+agentInfoOSDescription      OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "textual description of the OS"
+::= { AgentInfo 8 }
+
+agentInfoLocation           OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the path to be installed agent"
+::= { AgentInfo 9 }
+
+agentInfoSystemTime         OBJECT-TYPE
+   SYNTAX     TimeTicks
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "system time"
+::= { AgentInfo 10 }
+
+agentInfoLicense            OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "agent license"
+::= { AgentInfo 11 }
+
+agentInfoFileTransferInterval             OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "File Transfer Interval in Second(s)"
+::= { AgentInfo 12 }
+
+agentInfoFileTransferIP     OBJECT-TYPE
+   SYNTAX     IpAddress
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "File Transfer IP Address (Manager IP)"
+::= { AgentInfo 13 }
+
+agentInfoFileTransferPortNo OBJECT-TYPE
+   SYNTAX     INTEGER
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "File Transfer PortNo  (Manager PortNo)"
+::= { AgentInfo 14 }
+
+agentInfoLogFileSystemData  OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute path to the System Data log file"
+::= { AgentInfo 15 }
+
+agentInfoLogFileMonCol      OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute path to the Log Column log file"
+::= { AgentInfo 16 }
+
+agentInfoLogFileMonRow      OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute path to the Log Row log file"
+::= { AgentInfo 17 }
+
+agentInfoLogFileProcess     OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute path to the Process log file"
+::= { AgentInfo 18 }
+
+agentInfoLogFileBackup      OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute path to the Backup log file"
+::= { AgentInfo 19 }
+
+agentInfoLogFileJobProcess  OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute path to the Job Process log file"
+::= { AgentInfo 20 }
+
+agentInfoLogFileAppMetering OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute path to the Application Metering log file"
+::= { AgentInfo 21 }
+
+agentInfoLogFileTransaction OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute path to the Transaction log file"
+::= { AgentInfo 22 }
+
+agentInfoLogFileNetAppliance              OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute path to the Network Application log file"
+::= { AgentInfo 23 }
+
+agentInfoLogFileUserControl OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute path to the User Access Control log file"
+::= { AgentInfo 24 }
+
+agentInfoLogFileRBM         OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute path to the Rule-Based Monitoring &amp; Reaction log file"
+::= { AgentInfo 25 }
+
+agentInfoLogFileDistribution              OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute path to the File Distribution log file"
+::= { AgentInfo 26 }
+
+agentInfoLogFileCommand     OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute path to the File Browser &amp; User Command log file"
+::= { AgentInfo 27 }
+
+agentInfoLogFileTransfer    OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute path to the log file transfer log file"
+::= { AgentInfo 28 }
+
+agentInfoLogFileSize OBJECT-TYPE
+   SYNTAX     Integer32
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "Absolute path to the log file transfer log file"
+::= { AgentInfo 29 }
+
+
+subAgentTable OBJECT-TYPE
+              SYNTAX SEQUENCE OF SubAgentEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              ::= { Agent 2 }
+
+subAgentEntry OBJECT-TYPE
+              SYNTAX SubAgentEntry
+              MAX-ACCESS not-accessible
+              STATUS current
+              DESCRIPTION
+      ""
+              INDEX   { subAgentIndex }
+              ::= { subAgentTable 1 }
+
+SubAgentEntry ::=
+SEQUENCE {
+              subAgentIndex
+              Unsigned32,
+              subAgentIP
+              IpAddress,
+              subAgentName
+              DisplayString,
+              subAgentDescription
+              DisplayString,
+              subAgentVersion
+              DisplayString,
+              subAgentInstallDate
+              DateAndTime,
+              subAgentCurrentStatus
+              RowStatus
+}
+
+subAgentIndex OBJECT-TYPE
+   SYNTAX     Unsigned32
+   MAX-ACCESS               not-accessible
+   STATUS current
+   DESCRIPTION
+      "Uniquely identifies this row in the subAgentTable"
+::= { subAgentEntry 1 }
+
+subAgentIP    OBJECT-TYPE
+   SYNTAX     IpAddress
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "sub agent IP Address"
+::= { subAgentEntry 2 }
+
+subAgentName  OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "sub agent name"
+::= { subAgentEntry 3 }
+
+subAgentDescription         OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "textual description of sub agent"
+::= { subAgentEntry 4 }
+
+subAgentVersion             OBJECT-TYPE
+   SYNTAX     DisplayString
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the version of sub agent"
+::= { subAgentEntry 5 }
+
+subAgentInstallDate         OBJECT-TYPE
+   SYNTAX     DateAndTime
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "the date to be installed agent"
+::= { subAgentEntry 6 }
+
+subAgentCurrentStatus       OBJECT-TYPE
+   SYNTAX     RowStatus
+   MAX-ACCESS               read-create
+   STATUS current
+   DESCRIPTION
+      "current status of sub agent"
+::= { subAgentEntry 7 }
+
+
+END
+

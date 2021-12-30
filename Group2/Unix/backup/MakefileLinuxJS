@@ -1,0 +1,34 @@
+INCPATH=../inc/
+CC=gcc
+CFLAGS= -I../inc/  -Wall -g -c -DSCH_DEBUG -DJS_DEBUG -DJS_PRINT
+FLAGS=-L /usr/local/lib  -lnetsnmp -lnetsnmpagent -lnetsnmphelpers -lnetsnmpmibs -lnsl  -lrpmdb -lrpmbuild -lrpm -lrpmio -lrpmdb -lpopt
+
+FTP= /usr/local/lib/libNASC_FTP.a
+
+BINPATH=../src/
+
+
+OBJS=NASCenter_JS_Linux_List.o\
+  NASCenter_JS_Linux.o\
+  NASCenter_Scheduler.o
+	
+HEADERS=$(INCPATH)NASCenter_JS_Linux.h $(INCPATH)NASCenter_JS_Linux_List.h $(INCPATH)ctypes.h $(INCPATH)NASCenter_Errors.h $(INCPATH)jobProcessMasterTable.h $(INCPATH)JobProcessDetailTable.h $(INCPATH)NASCenter_Scheduler.h $(INCPATH)NASCenter_FileTrans_my.h $(INCPATH)NASCenter_common.h
+
+JobSchedule	:	$(OBJS)
+	$(CC)  $(OBJS)  -o   $(BINPATH)JobScheduleLinux -lpthread $(FLAGS) $(FTP)
+
+
+NASCenter_JS_Linux_List.o	:	NASCenter_JS_Linux_List.c $(HEADERS)
+		$(CC)  $(CFLAGS) NASCenter_JS_Linux_List.c  
+
+NASCenter_JS_Linux.o	:	NASCenter_JS_Linux.c $(HEADERS)
+		$(CC)  $(CFLAGS) NASCenter_JS_Linux.c  
+
+NASCenter_Scheduler.o	:	NASCenter_Scheduler.c $(HEADERS)
+		$(CC)  $(CFLAGS) NASCenter_Scheduler.c  
+
+clean	:	
+		$(RM)  NASCenter_JS_Linux.o err
+		$(RM)  NASCenter_JS_Linux_List.o 
+		$(RM)  NASCenter_Scheduler.o 
+		$(RM)  JobScheduleLinux

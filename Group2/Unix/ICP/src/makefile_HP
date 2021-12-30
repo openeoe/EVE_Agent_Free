@@ -1,0 +1,55 @@
+GNU_CC = gcc
+
+CC_FL = -Wall -c
+AR_FL = -r
+
+X_CC_FL = 
+X_AR_FL = 
+X_D_FL = 
+
+CC_D_FL = -D_POSIX_PTHREAD_SEMANTICS -DHPUNIX
+CC_I_FL = -I. \
+          -I../inc \
+          -I/usr/local/include
+CC_L_FL = -L/usr/local/lib
+
+LNK_LIBS = -lpthread  -lc  -lnetsnmp -lnetsnmpagent -lnetsnmphelpers -lnetsnmpmibs -lNASC_FTP -lpcap -lnsl   -lcrypt
+
+
+X_LIB_FL =
+X_BLD_FL =
+
+GNU_CC_FL = $(CC_FL) $(X_CC_FL)
+GNU_AR_FL = $(AR_FL) $(X_AR_FL)
+
+GNU_COMPILE = $(GNU_CC) $(GNU_CC_FL) $(CC_D_FL) $(X_D_FL)  $(CC_I_FL) $(CC_L_FL)
+GNU_ARCHIVE = $(GNU_AR) $(GNU_AR_FL) $(CC_L_FL)
+
+COMPILE = $(GNU_COMPILE) $?
+LINK    = $(GNU_CC) $(CC_L_FL) -o $@ $? $(LNK_LIBS) $(X_LIB_FL) $(X_BLD_FL)
+ARCHIVE = $(GNU_ARCHIVE) $@ $?
+
+
+RMF = /bin/rm -f
+
+.SUFFIXES : .o .c
+.c.o : 
+	$(RMF) $@;$(COMPILE)
+
+TARGET = ICP
+
+
+SRCFILES = NASCenter_ICP_main.c \
+           NASCenter_ICP_Utils.c \
+           NASCenter_ICP.c \
+           NASCenter_ICP_FileBRWS.c \
+           NASCenter_ICP_UMGMT.c
+
+
+OBJFILES = $(SRCFILES:.c=$(X_OBJ).o)
+
+$(TARGET): $(OIDFILE) $(OBJFILES) 
+	$(LINK)
+
+clean:
+	$(RMF) $(TARGET) $(OBJFILES)
