@@ -76,6 +76,7 @@ struct gstDiskStat{
 /* Function Prototypes */
 void diskTable_Init();
 int diskTable_GetNextDisk();
+void diskTable_GetDiskStat();
 
 /* Global Declaration */
 static int giDiskIdx=0;
@@ -292,6 +293,7 @@ void diskTable_Init(){
     DEBUGMSGTL(("diskTable", "diskTable_Init() start\n"));
 
     giDiskIdx = 1;
+    diskTable_GetDiskStat();   
     DEBUGMSGTL(("diskTable", "diskTable_Init() stop\n"));
 }
 
@@ -316,3 +318,78 @@ int diskTable_GetNextDisk(){
     	return -1;
     }
 }
+
+/*****************************************************************************
+ * name             :   diskTable_GetDiskStat
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   void
+ * global variables :   giDiskCnt, gpstDiskFirst
+ * calls            :   void
+ *****************************************************************************/
+void diskTable_GetDiskStat(){
+    FILE               *fpStat = NULL;
+    char 	        szBuff[8192];
+    char               *pcPos;
+    int                 iSize = 0;
+	int 				scanResult=0;
+    struct gstDiskStat *pstDiskCurrent = NULL; 
+
+    giDiskCnt = 0; 
+    DEBUGMSGTL(("nuri/diskTable", "diskTable_GetDiskStat entered\n"));
+/*
+   if(fpStat != NULL)
+	fclose(fpStat);
+*/
+    fpStat = fopen(STAT, "r");
+    if(fpStat != NULL){
+        memset(szBuff, '\0', 8192);
+	while(fgets(szBuff, 8192, fpStat) != NULL){
+            if(!strncmp(szBuff, "disk_io:", 8)){
+		pcPos = strchr(szBuff, '(');
+		if (pcPos != NULL)
+		{ 
+			while (1)
+			{
+				iSize = (giDiskCnt + 1) * sizeof(struct gstDiskStat);			
+				pstDiskCurrent = (struct gstDiskStat *)realloc(pstDiskCurrent, 
+							iSize);	
+				scanResult = sscanf(pcPos,"(%d,%d):(%lu,%lu,%lu,%lu,%lu)",
+		    			&(pstDiskCurrent[giDiskCnt].uiMajor), 
+		    			&(pstDiskCurrent[giDiskCnt].uiIndex), 
+		    			&(pstDiskCurrent[giDiskCnt].ulIOTot), 
+		    			&(pstDiskCurrent[giDiskCnt].ulIORead), 
+		    			&(pstDiskCurrent[giDiskCnt].ulBRead), 
+		    			&(pstDiskCurrent[giDiskCnt].ulIOWrite),
+		    			&(pstDiskCurrent[giDiskCnt].ulBWrite));
+				if(!scanResult) {
+					break;
+				}
+		    		giDiskCnt++;
+				
+		    		if (giDiskCnt >= MAXDISK)
+					break;
+                    		if ( (pcPos = strchr(pcPos, ' ')) == NULL)
+					break;
+				
+		    		while (*++pcPos == ' ');
+			}
+		}
+		gpstDiskFirst = pstDiskCurrent;
+                if(fpStat != NULL)
+		    fclose(fpStat);
+		return;
+	   }   
+	   else{
+	       DEBUGMSGTL(("nuri/diskTable", "disk_io not found in /proc/stat\n"));
+	   }
+	}
+	if(fpStat != NULL)
+	    fclose(fpStat);
+    }
+    else{
+	snmp_log(LOG_ERR, "/proc/stat open error");
+    }
+}
+
