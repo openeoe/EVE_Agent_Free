@@ -54,6 +54,8 @@ struct gstMsg{
 	unsigned long ulCTime;
 };
 
+/* Function prototype */
+void msgQTable_GetMsgQ();
 
 /* Global Declaration */
 static struct gstMsg *gpstMsgFirst = NULL;
@@ -75,3 +77,64 @@ init_MessageQueue(void)
 
     /* place any other initialization junk you need here */
 }
+
+/*****************************************************************************
+ * name             :   msgQTable_GetMsgQ
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   void
+ * global variables :   giMsgCnt, gpstMsgFirst
+ * calls            :   void
+ *****************************************************************************/
+void msgQTable_GetMsgQ(){
+    
+    FILE	*fpMsg = NULL;    
+    int         iFirst = 0;
+    int iSize = 0;
+    char        buff[128];
+    struct gstMsg *stMsgCurrent;
+    stMsgCurrent = NULL;     
+    giMsgCnt = 0; 
+        
+    if(fpMsg != NULL)
+        fclose(fpMsg);
+    if ((fpMsg = fopen(MSG_FILE, "r" )) != NULL){
+        memset(buff, '\0', 128);
+	while (fgets(buff, sizeof(buff), fpMsg) != NULL) {
+            if(iFirst == 0){
+		iFirst = 1;
+		continue;
+	    }			
+
+	    iSize = (giMsgCnt + 1) * sizeof (struct gstMsg);
+	    stMsgCurrent = (struct gstMsg *) realloc (stMsgCurrent, iSize);
+	    sscanf(buff, " %d %lu %d %lu %lu %lu %lu %d %d %d %d %lu %lu %lu ",
+				&(stMsgCurrent[giMsgCnt].uiKey), 
+				&(stMsgCurrent[giMsgCnt].ulMsgId), 
+				&(stMsgCurrent[giMsgCnt].uiPerms), 
+				&(stMsgCurrent[giMsgCnt].ulCBytes), 
+				&(stMsgCurrent[giMsgCnt].ulQNum), 
+				&(stMsgCurrent[giMsgCnt].ulLSPid), 
+				&(stMsgCurrent[giMsgCnt].ulLRPid), 
+				&(stMsgCurrent[giMsgCnt].uiUID), 
+				&(stMsgCurrent[giMsgCnt].uiGID), 
+				&(stMsgCurrent[giMsgCnt].uiCUID), 
+				&(stMsgCurrent[giMsgCnt].uiCGID), 
+				&(stMsgCurrent[giMsgCnt].ulSTime), 
+				&(stMsgCurrent[giMsgCnt].ulRTime), 
+				&(stMsgCurrent[giMsgCnt].ulCTime));
+	    giMsgCnt++;	
+            memset(buff, '\0', 128);
+	}
+	gpstMsgFirst = stMsgCurrent;
+        if(fpMsg)
+    	    fclose(fpMsg);
+    }
+    else{
+		snmp_log(LOG_ERR,"/proc/sysvipc/msg open error\n");
+    }
+}
+
+
+
