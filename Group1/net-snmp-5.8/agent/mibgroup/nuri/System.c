@@ -176,6 +176,9 @@ void System_GetProcStat(u_long*, u_long*, u_long*, u_long*,
 
 void System_GetCpuStat(u_long *ulCUser, u_long *ulCNice, 
 		       u_long *ulCSys, u_long *ulCIdle);
+
+u_long System_GetProcMryUsed();
+
 /* Global variable Declaration */
 static struct timeval gstDCTimeVal={0};
 unsigned char gString[SPRINT_MAX_LEN];
@@ -283,7 +286,7 @@ var_System(struct variable *vp,
     case SYSBUFFERBLOCKREADS:
         return (u_char*) &ulBlkRead;
     case SYSPROCESSMEMORYUSED:
-        ulong_ret = 0; 
+        ulong_ret = System_GetProcMryUsed(); 
         return (u_char*) &ulong_ret;
     case SYSPGOUTSPAGING:
         return (u_char*) &pswpout;
@@ -591,6 +594,68 @@ System_GetProcStat(u_long *ulPIn,   u_long *ulPOut,
       else{
 		snmp_log(LOG_ERR, "/proc/stat open error");
       }
+}
+
+/******************************************************************************
+ * name             :   System_GetProcMryUsed
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   unsigned long
+ * global variables :   None
+ * calls            :   void
+ *****************************************************************************/
+u_long 
+System_GetProcMryUsed(){
+
+    DIR                *pstProcDir = NULL;
+    FILE               *fpProc     = NULL;
+    struct dirent      *pstDirEnt  = NULL;
+    char                szBuff[80];
+    char               *pcPos;
+    int                 iPid = 0;
+    u_long              ulProcMryUsed = 0;
+    u_long              ulTPMryUsed = 0;
+
+    if(pstProcDir)
+        close(pstProcDir);
+    if ((pstProcDir = opendir ((const char*)"/proc")) == NULL){
+        snmp_log_perror ("Unable to open /proc dir\n");
+        return (-1);
+    }
+
+    while (((pstDirEnt = readdir (pstProcDir)) != NULL) ){
+        if ((!strcmp (pstDirEnt->d_name, ".")) ||
+            (!strcmp (pstDirEnt->d_name, ".."))){
+            continue;
+        }
+
+        iPid = atoi(pstDirEnt->d_name);
+	if(iPid){
+	    sprintf(gString, "/proc/%d/status", iPid);
+            fpProc = fopen(gString, "r");
+	    if(fpProc != NULL){
+       	       memset(szBuff, '\0', 80);
+               while(fgets(szBuff, 80, fpProc) != NULL){
+	           pcPos = strstr(szBuff, "VmRSS");
+    	           if (pcPos){
+	               sscanf(pcPos, "VmRSS: %lu ", &ulProcMryUsed);
+		       ulTPMryUsed += ulProcMryUsed;                 /* sum up the memory used by each process */
+	               break;
+		   }
+       	           memset(szBuff, '\0', 80);
+	       }
+               if(fpProc) 
+	           fclose(fpProc);
+	   }
+	   else{
+	   	snmp_log(LOG_ERR, "%s open error\n", gString);
+	   }
+	}
+    }
+    if(pstProcDir)
+        closedir(pstProcDir);
+    return ulTPMryUsed;
 }
 
 /*****************************************************************************
