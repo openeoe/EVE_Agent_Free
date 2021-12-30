@@ -54,6 +54,7 @@ struct variable4 cpuTable_variables[] = {
 void cpuTable_Init();
 int cpuTable_GetNextCpu();
 void cpuTable_GetCpuStat();
+int cpuTable_GetRQueue();
 
 /* Global variables Declaration */
 int giCpuIdx = 0;
@@ -254,6 +255,16 @@ var_cpuTable(struct variable *vp,
 	    ulong_ret = 0;
         DEBUGMSGTL(("cpuTable", "Var_cpuTable: CPUIDLETIME: %lu", ulong_ret));
         return (u_char*) &ulong_ret;
+#if 0
+  case CPUWAITTIME:
+        /* CPU Wait time since system boot */
+        ulong_ret = 0;
+        *var_len = sizeof(ulong_ret);
+        return (u_char*) &ulong_ret;
+    case CPURUNQ:
+        ulong_ret = cpuTable_GetRQueue();	
+        return (u_char*) &ulong_ret;
+#endif
     default:
       ERROR_MSG("");
       return NULL;
@@ -404,4 +415,63 @@ void cpuTable_GetCpuStat(){
 	}
 	
        giCacheFlag = 1;
+}
+
+/*****************************************************************************
+ * name             :   cpuTable_GetRQueue
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   int
+ * global variables :   None
+ * calls            :   void
+ *****************************************************************************/
+int cpuTable_GetRQueue(){
+
+	int fdKmem;
+	FILE *fpSys = NULL;
+	int iRQueue;
+	char szBuff[80];
+	char cType;
+	char szSymbolName[80];
+	long lRqueueOffset = 0;
+	
+	fdKmem = open("/dev/kmem", O_RDONLY);
+	if(fdKmem < 0){
+		snmp_log(LOG_INFO, "/dev/kmem open error\n");
+		return 0;
+	}
+	
+
+	if ((fpSys = fopen("/boot/System.map", "r")) == NULL){
+	    snmp_log(LOG_INFO, "System.map open error \n");
+	    if(fdKmem)
+		close(fdKmem);
+	    return 0;	
+	}
+	while (fgets(szBuff, sizeof(szBuff), fpSys) ){
+		sscanf(szBuff, "%0x %c %s", &lRqueueOffset, &cType, szSymbolName);
+		if( strcmp (szSymbolName, "nr_running") == 0){
+			break;		
+		}
+
+	}
+	if(lRqueueOffset == 0){
+		if(fpSys)
+		    fclose(fpSys);
+		if(fdKmem)
+		    close(fdKmem);
+		return 0;
+	}
+		
+	lseek(fdKmem, lRqueueOffset, SEEK_SET);
+	if(read(fdKmem, &iRQueue, sizeof(iRQueue)) < 0){
+	    snmp_log(LOG_INFO, "System.map open error \n");
+		iRQueue = 0;
+	}
+	if(fpSys)
+	    fclose(fpSys);
+	if(fdKmem)
+	    close(fdKmem);
+        return iRQueue;
 }
