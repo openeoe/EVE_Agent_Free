@@ -40,6 +40,36 @@ struct variable4 MessageQueue_variables[] = {
 #define MSGQTOTALHEADERS		3
 {MSGQTOTALHEADERS,  ASN_INTEGER,  RONLY ,  var_MessageQueue, 1,  { 1 }},
 
+#define MSGQINDEX		4
+{MSGQINDEX,  ASN_UNSIGNED,  RONLY,   var_msgQTable, 3,  { 4, 1, 1 }},
+#define MSGQID		5
+{MSGQID,  ASN_OCTET_STR,  RONLY,   var_msgQTable, 3,  { 4, 1, 2 }},
+#define MSGQKEY		6
+{MSGQKEY,  ASN_INTEGER,  RONLY,   var_msgQTable, 3,  { 4, 1, 3 }},
+#define MSGQMODE		7
+{MSGQMODE,  ASN_INTEGER,  RONLY,   var_msgQTable, 3,  { 4, 1, 4 }},
+#define MSGQOWNER		8
+{MSGQOWNER,  ASN_OCTET_STR,  RONLY,   var_msgQTable, 3,  { 4, 1, 5 }},
+#define MSGQGROUP		9
+{MSGQGROUP,  ASN_OCTET_STR,  RONLY,   var_msgQTable, 3,  { 4, 1, 6 }},
+#define MSGQCREATOR		10
+{MSGQCREATOR,  ASN_OCTET_STR,  RONLY,   var_msgQTable, 3,  { 4, 1, 7 }},
+#define MSGQCREATORGROUP		11
+{MSGQCREATORGROUP,  ASN_OCTET_STR,  RONLY,   var_msgQTable, 3,  { 4, 1, 8 }},
+#define MSGQMESSAGEONQUEUE		12
+{MSGQMESSAGEONQUEUE,  ASN_INTEGER,  RONLY,   var_msgQTable, 3,  { 4, 1, 9 }},
+#define MSGQMAXBYTES		13
+{MSGQMAXBYTES,  ASN_INTEGER,  RONLY,   var_msgQTable, 3,  { 4, 1, 10 }},
+#define MSGQLASTPIDSENDQUEUE		14
+{MSGQLASTPIDSENDQUEUE,  ASN_INTEGER,  RONLY,   var_msgQTable, 3,  { 4, 1, 11 }},
+#define MSGQLASTPIDRECEIVEMSG		15
+{MSGQLASTPIDRECEIVEMSG,  ASN_INTEGER,  RONLY,   var_msgQTable, 3,  { 4, 1, 12 }},
+#define MSGQLASTMSGSENTTIME		16
+{MSGQLASTMSGSENTTIME,  ASN_TIMETICKS,  RONLY,   var_msgQTable, 3,  { 4, 1, 13 }},
+#define MSGQLASTMSGRECEIVETIME		17
+{MSGQLASTMSGRECEIVETIME,  ASN_TIMETICKS,  RONLY,   var_msgQTable, 3,  { 4, 1, 14 }},
+#define MSGQCREATEORCHANGETIME		18
+{MSGQCREATEORCHANGETIME,  ASN_TIMETICKS,  RONLY,   var_msgQTable, 3,  { 4, 1, 15 }},
 };
 /*    (L = length of the oidsuffix) */
 
@@ -61,6 +91,9 @@ struct gstMsg{
 };
 
 /* Function prototype */
+int header_msgQTable(struct variable *, oid *, size_t  *, int , size_t *, WriteMethod **);
+void msgQTable_Init();
+int  msgQTable_GetNextMsgQ();
 void msgQTable_GetMsgQ();
 
 /* Global Declaration */
@@ -83,6 +116,71 @@ init_MessageQueue(void)
 
     /* place any other initialization junk you need here */
 }
+
+int
+header_msgQTable(struct variable *vp, 
+                oid     *name, 
+                size_t  *length, 
+                int     exact, 
+                size_t  *var_len, 
+                WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+//    static unsigned char string[SPRINT_MAX_LEN];
+//    static oid objid[MAX_OID_LEN];
+//    static struct counter64 c64;
+	 
+  #define NAME_LENGTH    13
+    oid             newname[MAX_OID_LEN];
+    int             iMsgIdx=0;
+    int             iLowIndex = -1;
+    int             iResult=0;
+
+    DEBUGMSGTL(("nuri/msgQTable", "header_msgQTable: "));
+    DEBUGMSGOID(("nuri/msgQTable", name, *length));
+    DEBUGMSG(("nuri/msgQTable", " %d\n", exact));
+
+    memcpy((char *) newname, (char *) vp->name, vp->namelen * sizeof(oid));
+    /*
+     * Find "next" Processor Entry
+     */
+
+    msgQTable_Init();
+    for (;;) {
+        iMsgIdx = msgQTable_GetNextMsgQ();
+        if (iMsgIdx == -1)
+            break;
+        newname[NAME_LENGTH] = iMsgIdx;
+        iResult = snmp_oid_compare(name, *length, newname, vp->namelen + 1);
+        if (exact && (iResult == 0)) {
+            iLowIndex = iMsgIdx;
+            break;
+        }
+        if ((!exact && (iResult < 0)) &&
+            (iLowIndex == -1 || iMsgIdx < iLowIndex)) {
+            iLowIndex = iMsgIdx;
+#ifdef MSG_MONOTONICALLY_INCREASING
+            break;
+#endif
+        }
+    }
+
+    if (iLowIndex == -1) {
+        DEBUGMSGTL(("nuri/msgQTable", "... index out of range\n"));
+        return (MATCH_FAILED);
+    }
+
+    memcpy((char *) name, (char *) newname, (vp->namelen + 1) * sizeof(oid));
+    *length = vp->namelen + 1;
+    *write_method = 0;
+    *var_len = sizeof(long);    /* default to 'long' results */
+
+    return iLowIndex;
+
+}
+
 
 /*
  * var_MessageQueue():
@@ -145,6 +243,166 @@ var_MessageQueue(struct variable *vp,
       ERROR_MSG("");
     }
     return NULL;
+}
+
+
+/*
+ * var_msgQTable():
+ *   Handle this table separately from the scalar value case.
+ *   The workings of this are basically the same as for var_ above.
+ */
+unsigned char *
+var_msgQTable(struct variable *vp,
+    	    oid     *name,
+    	    size_t  *length,
+    	    int     exact,
+    	    size_t  *var_len,
+    	    WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+    static unsigned char string[SPRINT_MAX_LEN];
+    static oid objid[MAX_OID_LEN];
+    static struct counter64 c64;
+
+    static struct gstMsg pstMsgStat;
+    static int iMsgIdx;
+    //static struct msginfo stMsgInfo;
+    static struct passwd *psPasswd;
+    static struct group *psGroup;	    
+
+    /*
+   * This assumes that the table is a 'simple' table.
+   *	See the implementation documentation for the meaning of this.
+   *	You will need to provide the correct value for the TABLE_SIZE parameter
+   *
+   * If this table does not meet the requirements for a simple table,
+   *	you will need to provide the replacement code yourself.
+   *	Mib2c is not smart enough to write this for you.
+   *    Again, see the implementation documentation for what is required.
+   */
+    if ((iMsgIdx = header_msgQTable(vp,name,length,exact,var_len,write_method))
+                                  == MATCH_FAILED ){
+	    free(gpstMsgFirst);
+            gpstMsgFirst = NULL;
+	    return NULL;
+    }
+    if(gpstMsgStat){
+        memcpy(&pstMsgStat, gpstMsgStat, sizeof(struct gstMsg)) ;
+        free(gpstMsgFirst);
+    }
+    else
+        return NULL;
+    *var_len = sizeof(u_long);
+
+    /*
+   * this is where we do the value assignments for the mib results.
+   */
+    switch(vp->magic) {
+    case MSGQINDEX:
+	return (u_char *) &iMsgIdx;
+    case MSGQID:
+        sprintf(string,"%lu", pstMsgStat.ulMsgId); 
+        *var_len = strlen(string);
+        return (u_char*) string;
+    case MSGQKEY:
+        ulong_ret = pstMsgStat.uiKey;
+        return (u_char*) &ulong_ret;
+    case MSGQMODE:
+        ulong_ret = pstMsgStat.uiPerms;
+        return (u_char*) &ulong_ret;
+    case MSGQOWNER:
+        psPasswd = getpwuid(pstMsgStat.uiUID);
+	if(psPasswd != NULL)
+	    strcpy(string, psPasswd->pw_name); 
+	else
+	    strcpy(string, "");
+	*var_len = strlen(string);	
+	return (u_char*) string;
+    case MSGQGROUP:
+        psGroup = getgrgid(pstMsgStat.uiGID);
+	if(psGroup != NULL)
+	    sprintf(string,"%s", psGroup->gr_name); 
+	else
+	    strcpy(string, "");
+	*var_len = strlen(string);	
+	return (u_char*) string;
+    case MSGQCREATOR:
+       	psPasswd = getpwuid(pstMsgStat.uiCUID);
+	if(psPasswd != NULL)
+	    strcpy(string, psPasswd->pw_name); 
+	else
+            strcpy(string, "");
+	*var_len = strlen(string);	
+	return (u_char*) string;
+    case MSGQCREATORGROUP:
+        psGroup = getgrgid(pstMsgStat.uiCGID);
+	if(psGroup != NULL)
+	    sprintf(string,"%s", psGroup->gr_name); 
+	else
+	    strcpy(string, "");
+	*var_len = strlen(string);	
+	return (u_char*) string;
+    case MSGQMESSAGEONQUEUE:
+        ulong_ret = pstMsgStat.ulCBytes;
+        return (u_char*) &ulong_ret;
+    case MSGQMAXBYTES:
+        ulong_ret = pstMsgStat.ulQNum;
+        return (u_char*) &ulong_ret;
+    case MSGQLASTPIDSENDQUEUE:
+        ulong_ret = pstMsgStat.ulLSPid;
+        return (u_char*) &ulong_ret;
+    case MSGQLASTPIDRECEIVEMSG:
+        ulong_ret = pstMsgStat.ulLRPid;
+        return (u_char*) &ulong_ret;
+    case MSGQLASTMSGSENTTIME:
+        ulong_ret = pstMsgStat.ulSTime;
+        return (u_char*) &ulong_ret;
+    case MSGQLASTMSGRECEIVETIME:
+        ulong_ret = pstMsgStat.ulRTime;
+        return (u_char*) &ulong_ret;
+    case MSGQCREATEORCHANGETIME:
+        ulong_ret = pstMsgStat.ulCTime;
+        return (u_char*) &ulong_ret;
+    default:
+      ERROR_MSG("");
+    }
+    return NULL;
+}
+
+/*****************************************************************************
+ * name             :   msgQTable_Init
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   void
+ * global variables :   giMsgIdx
+ * calls            :   msgQTable_GetMsgQ
+ *****************************************************************************/
+void msgQTable_Init(){
+	giMsgIdx = 1;
+	msgQTable_GetMsgQ();
+}
+
+/*****************************************************************************
+ * name             :   msgQTable_GetNextMsgQ
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   int
+ * global variables :   gpstMsgStat
+ * calls            :   void
+ *****************************************************************************/
+int msgQTable_GetNextMsgQ(){
+    if(giMsgIdx <= giMsgCnt){
+	gpstMsgStat = &gpstMsgFirst[giMsgIdx - 1];     
+        return (giMsgIdx++);
+    }  
+    else{
+        gpstMsgStat = NULL;
+        return -1;
+    }
 }
 
 /*****************************************************************************
