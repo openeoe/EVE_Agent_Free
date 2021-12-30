@@ -32,9 +32,27 @@ oid cpuTable_variables_oid[] = { 1,3,6,1,4,1,3204,1,3,21 };
 struct variable4 cpuTable_variables[] = {
 /*  magic number        , variable type , ro/rw , callback fn  , L, oidsuffix */
 
+#define CPUID		1
+{CPUID,  ASN_UNSIGNED,  RONLY,   var_cpuTable, 3,  { 1, 1, 1 }},
+#define CPUUTILIZATION		2
+{CPUUTILIZATION,  ASN_INTEGER,  RONLY,   var_cpuTable, 3,  { 1, 1, 2 }},
+#define CPUIDLETIME		3
+{CPUIDLETIME,  ASN_INTEGER,  RONLY,   var_cpuTable, 3,  { 1, 1, 3 }},
+#define CPUUSERTIME		4
+{CPUUSERTIME,  ASN_INTEGER,  RONLY,   var_cpuTable, 3,  { 1, 1, 4 }},
+#define CPUSYSTEMTIME		5
+{CPUSYSTEMTIME,  ASN_INTEGER,  RONLY,   var_cpuTable, 3,  { 1, 1, 5 }},
+#define CPUWAITTIME		6
+{CPUWAITTIME,  ASN_INTEGER,  RONLY,   var_cpuTable, 3,  { 1, 1, 6 }},
+#define CPURUNQ		7
+{CPURUNQ,  ASN_INTEGER,  RONLY,   var_cpuTable, 3,  { 1, 1, 7 }},
 };
 /*    (L = length of the oidsuffix) */
 
+
+/* Function Prototypes */
+void cpuTable_Init();
+int cpuTable_GetNextCpu();
 
 /* Global variables Declaration */
 int giCpuIdx = 0;
@@ -56,4 +74,223 @@ init_cpuTable(void)
                cpuTable_variables_oid);
 
     /* place any other initialization junk you need here */
+}
+
+/*
+ * var_cpuTable():
+ *   This function is called every time the agent gets a request for
+ *   a scalar variable that might be found within your mib section
+ *   registered above.  It is up to you to do the right thing and
+ *   return the correct value.
+ *     You should also correct the value of "var_len" if necessary.
+ *
+ *   Please see the documentation for more information about writing
+ *   module extensions, and check out the examples in the examples
+ *   and mibII directories.
+ */
+int
+header_cpuTable(struct variable *vp, 
+                oid     *name, 
+                size_t  *length, 
+                int     exact, 
+                size_t  *var_len, 
+                WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+    static unsigned char string[SPRINT_MAX_LEN];
+    static oid objid[MAX_OID_LEN];
+    static struct counter64 c64;
+
+  #define NAME_LENGTH    13
+    oid             newname[MAX_OID_LEN];
+    int             iCpuIdx=0;
+    int             ILowIndex = -1;
+    int             IResult=0;
+
+    DEBUGMSGTL(("nuri/cpuTable", "header_cpuTable: "));
+    DEBUGMSGOID(("nuri/cpuTable", name, *length));
+    DEBUGMSG(("nuri/cpuTable", " %d\n", exact));
+
+    memcpy((char *) newname, (char *) vp->name, vp->namelen * sizeof(oid));
+    /*
+     * Find "next" Processor Entry
+     */
+
+    cpuTable_Init();
+    for (;;) {
+        iCpuIdx = cpuTable_GetNextCpu();
+        if (iCpuIdx == -1)
+            break;
+        newname[NAME_LENGTH] = iCpuIdx;
+        IResult = snmp_oid_compare(name, *length, newname, vp->namelen + 1);
+        if (exact && (IResult == 0)) {
+            ILowIndex = iCpuIdx;
+            break;
+        }
+        if ((!exact && (IResult < 0)) &&
+            (ILowIndex == -1 || iCpuIdx < ILowIndex)) {
+            ILowIndex = iCpuIdx;
+#ifdef CPU_MONOTONICALLY_INCREASING
+            break;
+#endif
+        }
+    }
+
+    if (ILowIndex == -1) {
+        DEBUGMSGTL(("nuri/cpuTable", "... index out of range\n"));
+        return (MATCH_FAILED);
+    }
+
+    memcpy((char *) name, (char *) newname, (vp->namelen + 1) * sizeof(oid));
+    *length = vp->namelen + 1;
+    *write_method = 0;
+    *var_len = sizeof(long);    /* default to 'long' results */
+    return ILowIndex;
+
+}
+int VAR;
+#define VALUE  0
+/*
+ * var_cpuTable():
+ *   Handle this table separately from the scalar value case.
+ *   The workings of this are basically the same as for var_ above.
+ */
+
+unsigned long zero_round(double d){
+    if(1 > d > 0){
+        return (u_long) ceil(d);
+    }else{
+        return (u_long) floor(d + 0.5);
+    }
+}
+
+unsigned char *
+var_cpuTable(struct variable *vp,
+    	    oid     *name,
+    	    size_t  *length,
+    	    int     exact,
+    	    size_t  *var_len,
+    	    WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+    static unsigned char string[SPRINT_MAX_LEN];
+    static oid objid[MAX_OID_LEN];
+    static struct counter64 c64;
+    gstCpu stCpuStat;
+    unsigned long long ullTotTime = 0;
+    unsigned long long ullUtilTime = 0;
+    static int iCpuIdx=0;    
+    unsigned long long ullTemp = 0;
+  /* 
+   * This assumes that the table is a 'simple' table.
+   *	See the implementation documentation for the meaning of this.
+   *	You will need to provide the correct value for the TABLE_SIZE parameter
+   *
+   * If this table does not meet the requirements for a simple table,
+   *	you will need to provide the replacement code yourself.
+   *	Mib2c is not smart enough to write this for you.
+   *    Again, see the implementation documentation for what is required.
+   */
+    iCpuIdx = header_cpuTable(vp,name,length,exact,var_len,write_method);
+    if(iCpuIdx == MATCH_FAILED){		
+	if(gpstCpuFirst != NULL && (!giCacheFlag)){
+            free(gpstCpuFirst);
+	    gpstCpuFirst = NULL;
+	}
+	return NULL;
+    }
+    DEBUGMSGTL(("nuri/cpuTable", "idx: %lu", gpstCpuStat->ulIdx));
+    memcpy(&stCpuStat, gpstCpuStat, sizeof(gstCpu));
+    if(gpstCpuFirst != NULL && (!giCacheFlag)){
+    	free(gpstCpuFirst);
+    	gpstCpuFirst = NULL;
+    }
+    stCpuStat.ulUser = stCpuStat.ulUser + stCpuStat.ulNice;
+    ullTotTime = stCpuStat.ulSys + stCpuStat.ulIdle + stCpuStat.ulUser;
+    ullUtilTime = stCpuStat.ulSys + stCpuStat.ulUser;
+    DEBUGMSGTL(("nuri/cpuTable", "Var_cpuTable: Idle: %lu ullTotTime: %lu\n",stCpuStat.ulIdle, ullTotTime));
+    *var_len = sizeof(unsigned long);
+    switch(vp->magic) {
+    case CPUID:
+	ulong_ret = stCpuStat.ulIdx;
+	DEBUGMSGTL(("cpuTable", "Var_cpuTable: CPUID: %d\n", ulong_ret));
+	return (u_char*) &ulong_ret; /* CPU Index */
+    case CPUUTILIZATION:
+        ullTemp =  100 * (unsigned long long)ullUtilTime;
+        if(ullTotTime)
+	    ulong_ret = zero_round((double)ullTemp /ullTotTime); 
+        else
+	    ulong_ret = 0;
+	DEBUGMSGTL(("cpuTable", "Var_cpuTable: CPUIDLETIME: %lu", ulong_ret));
+        return (u_char*) &ulong_ret;
+    case CPUIDLETIME:
+         /* CPU Idle Time since system boot */
+        ullTemp =  100 * (unsigned long long)stCpuStat.ulIdle;
+        if(ullTotTime)
+	    ulong_ret = zero_round((double)ullTemp /ullTotTime); 
+        else
+	    ulong_ret = 0;
+	DEBUGMSGTL(("cpuTable", "Var_cpuTable: CPUIDLETIME: %lu", ulong_ret));
+        return (u_char*) &ulong_ret;
+    case CPUUSERTIME:
+        /* CPU User Time since system boot */
+        ullTemp =  100 * (unsigned long long)stCpuStat.ulUser;
+        if(ullTotTime)
+	    ulong_ret = zero_round((double)ullTemp /ullTotTime); 
+        else
+	    ulong_ret = 0;
+       	DEBUGMSGTL(("cpuTable", "Var_cpuTable: CPUIDLETIME: %lu", ulong_ret));
+        return (u_char*) &ulong_ret;
+    case CPUSYSTEMTIME:
+        ullTemp =  100 * (unsigned long long)stCpuStat.ulSys;
+        if(ullTotTime)
+	    ulong_ret = zero_round((double)ullTemp /ullTotTime); 
+        else
+	    ulong_ret = 0;
+        DEBUGMSGTL(("cpuTable", "Var_cpuTable: CPUIDLETIME: %lu", ulong_ret));
+        return (u_char*) &ulong_ret;
+    default:
+      ERROR_MSG("");
+      return NULL;
+    }
+    return NULL;
+}
+
+
+/*****************************************************************************
+ * name             :   cpuTable_Init
+ * description      :   Initializes the cpu Table index
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   void
+ * global variables :   giCpuIdx
+ * calls            :   cpuTable_GetCpuStat
+ *****************************************************************************/
+void cpuTable_Init(){
+    giCpuIdx = 1;  
+}     
+
+/*****************************************************************************
+ * name             :   cpuTable_GetNextCpu
+ * description      :   Gets the next processor information
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   int 
+ * global variables :   gpstCpuStat
+ * calls            :   void
+ *****************************************************************************/
+int cpuTable_GetNextCpu(){
+
+    if(giCpuIdx <= giCpuCnt){
+        gpstCpuStat = &gpstCpuFirst[giCpuIdx - 1];
+	return giCpuIdx++;
+    }  
+    else{
+	gpstCpuStat = NULL;
+        return -1;
+    }
 }
