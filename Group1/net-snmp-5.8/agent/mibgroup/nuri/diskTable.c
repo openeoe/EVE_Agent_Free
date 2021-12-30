@@ -34,6 +34,30 @@ oid diskTable_variables_oid[] = { 1,3,6,1,4,1,3204,1,3,22 };
 struct variable4 diskTable_variables[] = {
 /*  magic number        , variable type , ro/rw , callback fn  , L, oidsuffix */
 
+#define DISKINDEX		1
+{DISKINDEX,  ASN_UNSIGNED,  RONLY,   var_diskTable, 3,  { 1, 1, 1 }},
+#define DISKNAME		2
+{DISKNAME,  ASN_OCTET_STR,  RONLY,   var_diskTable, 3,  { 1, 1, 2 }},
+#define DISKBLOCKSIZE		3
+{DISKBLOCKSIZE,  ASN_INTEGER,  RONLY,   var_diskTable, 3,  { 1, 1, 3 }},
+#define DISKTRANSFERS		4
+{DISKTRANSFERS,  ASN_INTEGER,  RONLY,   var_diskTable, 3,  { 1, 1, 4 }},
+#define DISKTOTALIO		5
+{DISKTOTALIO,  ASN_INTEGER,  RONLY,   var_diskTable, 3,  { 1, 1, 5 }},
+#define DISKBLOCKSREAD		6
+{DISKBLOCKSREAD,  ASN_INTEGER,  RONLY,   var_diskTable, 3,  { 1, 1, 6 }},
+#define DISKBLOCKSWRITE		7
+{DISKBLOCKSWRITE,  ASN_INTEGER,  RONLY,   var_diskTable, 3,  { 1, 1, 7 }},
+#define DISKACTIVETIME		8
+{DISKACTIVETIME,  ASN_INTEGER,  RONLY,   var_diskTable, 3,  { 1, 1, 8 }},
+#define DISKPAGING		9
+{DISKPAGING,  ASN_INTEGER,  RONLY,   var_diskTable, 3,  { 1, 1, 9 }},
+#define DISKPAGESIZE		10
+{DISKPAGESIZE,  ASN_INTEGER,  RONLY,   var_diskTable, 3,  { 1, 1, 10 }},
+#define DISKFACTOR		11
+{DISKFACTOR,  ASN_INTEGER,  RONLY,   var_diskTable, 3,  { 1, 1, 11 }},
+#define DISKRESPONSETIME		12
+{DISKRESPONSETIME,  ASN_TIMETICKS,  RONLY,   var_diskTable, 3,  { 1, 1, 12 }},
 };
 /*    (L = length of the oidsuffix) */
 
@@ -47,6 +71,11 @@ struct gstDiskStat{
     unsigned long ulBRead;
     unsigned long ulBWrite;
 };
+
+
+/* Function Prototypes */
+void diskTable_Init();
+int diskTable_GetNextDisk();
 
 /* Global Declaration */
 static int giDiskIdx=0;
@@ -67,4 +96,223 @@ init_diskTable(void)
                diskTable_variables_oid);
 
     /* place any other initialization junk you need here */
+}
+
+/*
+ * var_diskTable():
+ *   This function is called every time the agent gets a request for
+ *   a scalar variable that might be found within your mib section
+ *   registered above.  It is up to you to do the right thing and
+ *   return the correct value.
+ *     You should also correct the value of "var_len" if necessary.
+ *
+ *   Please see the documentation for more information about writing
+ *   module extensions, and check out the examples in the examples
+ *   and mibII directories.
+ */
+int
+header_diskTable(struct variable *vp, 
+                oid     *name, 
+                size_t  *length, 
+                int     exact, 
+                size_t  *var_len, 
+                WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+    static unsigned char string[SPRINT_MAX_LEN];
+    static oid objid[MAX_OID_LEN];
+    static struct counter64 c64;
+
+  /*  if (header_generic(vp,name,length,exact,var_len,write_method)
+                                  == MATCH_FAILED )
+    return NULL; */
+  #define NAME_LENGTH    13
+    oid             newname[MAX_OID_LEN];
+    int             iDiskIdx, iLowIndex = -1;
+    int             iResult;
+
+    DEBUGMSGTL(("nuri/diskTable", "header_diskTable: "));
+    DEBUGMSGOID(("nuri/diskTable", name, *length));
+    DEBUGMSG(("nuri/diskTable", " %d\n", exact));
+
+    memcpy((char *) newname, (char *) vp->name, vp->namelen * sizeof(oid));
+    /*
+     * Find "next" Disk Entry
+     */
+
+    diskTable_Init();
+    for (;;) {
+        iDiskIdx = diskTable_GetNextDisk();
+        if (iDiskIdx == -1)
+            break;
+        newname[NAME_LENGTH] = iDiskIdx;
+        iResult = snmp_oid_compare(name, *length, newname, vp->namelen + 1);
+        if (exact && (iResult == 0)) {
+            iLowIndex = iDiskIdx;
+            break;
+        }
+        if ((!exact && (iResult < 0)) &&
+            (iLowIndex == -1 || iDiskIdx < iLowIndex)) {
+            iLowIndex = iDiskIdx;
+#ifdef DISK_MONOTONICALLY_INCREASING
+            break;
+#endif
+        }
+    }
+
+    if (iLowIndex == -1) {
+        DEBUGMSGTL(("host/hr_filesys", "... uiIndex out of range\n"));
+        return (MATCH_FAILED);
+    }
+
+    memcpy((char *) name, (char *) newname, (vp->namelen + 1) * sizeof(oid));
+    *length = vp->namelen + 1;
+    *write_method = 0;
+    *var_len = sizeof(u_long);    /* default to 'long' results */
+
+    return iLowIndex;
+
+}
+
+/*
+ * var_diskTable():
+ *   Handle this table separately from the scalar value case.
+ *   The workings of this are basically the same as for var_ above.
+ */
+unsigned char *
+var_diskTable(struct variable *vp,
+    	    oid     *name,
+    	    size_t  *length,
+    	    int     exact,
+    	    size_t  *var_len,
+    	    WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+    static unsigned char string[SPRINT_MAX_LEN];
+    static oid objid[MAX_OID_LEN];
+    static struct counter64 c64;
+
+    static int iDiskIdx;
+    static int iTemp;
+    static struct gstDiskStat stDiskStat;
+
+  /* 
+   * This assumes that the table is a 'simple' table.
+   *	See the implementation documentation for the meaning of this.
+   *	You will need to provide the correct value for the TABLE_SIZE parameter
+   *
+   * If this table does not meet the requirements for a simple table,
+   *	you will need to provide the replacement code yourself.
+   *	Mib2c is not smart enough to write this for you.
+   *    Again, see the implementation documentation for what is required.
+   */
+
+    DEBUGMSGTL(("nuri/diskTable", "var_diskTable entered\n"));
+    if ((iDiskIdx = header_diskTable(vp,name,length,exact,var_len,write_method)) == MATCH_FAILED){
+        if(gpstDiskFirst != NULL){
+       	    free(gpstDiskFirst);
+	    gpstDiskFirst = NULL;
+	}
+	return NULL;
+    }
+    memcpy(&stDiskStat, gpstDiskStat, sizeof(struct gstDiskStat));
+    if(gpstDiskFirst != NULL){
+    	free(gpstDiskFirst);
+    	gpstDiskFirst = NULL;
+    }
+   *var_len = sizeof(u_long);
+
+   switch(vp->magic)
+   {
+    case DISKINDEX:
+       	DEBUGMSGTL(("nuri/diskTable", "Var_diskTable: DISKINDEX: %d", iDiskIdx));
+        return (u_char*) &iDiskIdx; /* Disk Index */
+    case DISKNAME:
+        sprintf(string,"dev%d-%d", stDiskStat.uiMajor, stDiskStat.uiIndex ); 
+        *var_len = strlen(string);
+        return (u_char*) string;
+  /*  case DISKBLOCKSIZE:
+        ulong_ret = 0;
+        return (u_char*) &ulong_ret; 
+    case DISKTRANSFERS:
+         ulong_ret = 0;
+        return (u_char*) &ulong_ret; 
+  */ 
+    case DISKTOTALIO:
+    	ulong_ret = stDiskStat.ulIOTot;    
+   	return (u_char*) &ulong_ret; 
+    case DISKBLOCKSREAD:
+    	ulong_ret = stDiskStat.ulBRead;    
+   	return (u_char*) &ulong_ret; 
+    case DISKBLOCKSWRITE:
+    	ulong_ret = stDiskStat.ulBWrite;    
+   	return (u_char*) &ulong_ret; 
+/*
+    case DISKACTIVETIME:
+        ulong_ret = 0;
+        return (u_char*) &ulong_ret;  
+    case DISKPAGING:
+        ulong_ret = PAGING_NOT_SUPPORTED;	
+        *var_len = sizeof(ulong_ret);
+        return (u_char*) &ulong_ret;
+    case DISKPAGESIZE:
+        ulong_ret = PAGING_NOT_SUPPORTED;	
+        *var_len = sizeof(ulong_ret);
+        return (u_char*) &ulong_ret;
+    case DISKFACTOR:
+        ulong_ret = PAGING_NOT_SUPPORTED;	
+        *var_len = sizeof(ulong_ret);
+        return (u_char*) &ulong_ret;
+    case DISKRESPONSETIME:
+        ulong_ret = 0;
+        *var_len = sizeof(ulong_ret);
+        return (u_char*) &ulong_ret;
+*/
+    default:
+      ERROR_MSG("");
+}
+return NULL;
+}
+
+
+/*****************************************************************************
+ * name             :   diskTable_Init
+ * description      :   Initializes the disk table index
+ * input parameters :   None
+ * output parameters:   None 
+ * return type      :   void
+ * global variables :   giDiskIdx
+ * calls            :   diskTable_GetDiskStat
+ *****************************************************************************/
+void diskTable_Init(){
+    DEBUGMSGTL(("diskTable", "diskTable_Init() start\n"));
+
+    giDiskIdx = 1;
+    DEBUGMSGTL(("diskTable", "diskTable_Init() stop\n"));
+}
+
+/*****************************************************************************
+ * name             :   diskTable_GetNextDisk 
+ * description      :   Gets the next disk status information
+ * input parameters :   None
+ * output parameters:   None 
+ * return type      :   int  
+ * global variables :   gpstDiskStat
+ * calls            :   void 
+ *****************************************************************************/
+int diskTable_GetNextDisk(){
+    DEBUGMSGTL(("diskTable", "diskTable_GetNextDisk() start\n"));
+    if(giDiskIdx <= giDiskCnt){
+        gpstDiskStat = &gpstDiskFirst[giDiskIdx - 1];
+    	DEBUGMSGTL(("diskTable", "diskTable_GetNextDisk() stop\n"));
+	return giDiskIdx++;
+    }else{
+	gpstDiskStat = NULL;
+    	DEBUGMSGTL(("diskTable", "diskTable_GetNextDisk() stop giDiskIdx[null]\n"));
+    	return -1;
+    }
 }
