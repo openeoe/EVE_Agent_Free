@@ -76,6 +76,7 @@ struct gstNet{
 
 void networkTable_Init();
 int  networkTable_GetNextNet();
+void networkTable_GetNet();
 
 static struct gstNet *gpstNetFirst = NULL;
 static struct gstNet *gpstNetStat = NULL;
@@ -296,6 +297,7 @@ var_networkTable(struct variable *vp,
  *****************************************************************************/
 void networkTable_Init(){
   	giNetIdx = 1;
+	networkTable_GetNet();
 }
 
 /*****************************************************************************
@@ -315,5 +317,72 @@ int networkTable_GetNextNet(){
     else{
 	gpstNetStat = NULL;
         return -1;
+    }
+}
+
+/*****************************************************************************
+ * name             :   networkTable_GetNet
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   void
+ * global variables :   giNetCnt, gpstNetFirst
+ * calls            :   void
+ *****************************************************************************/
+void
+networkTable_GetNet(){
+
+    FILE	*fpNet = NULL;    
+    int         iFirst = 0;
+    int         iSize = 0;
+    char        buff[300];
+    struct gstNet *pstNetCurrent = NULL;
+    char * pcPos;
+    giNetCnt = 0; 
+    
+    DEBUGMSGTL(("networkTable","networkTable_GetNet\n"));
+    if(fpNet != NULL)
+        fclose(fpNet);	
+    memset(buff, '\0', 128);
+    if ((fpNet = fopen(NET_FILE, "r" )) != NULL){
+        while (fgets(buff, sizeof(buff), fpNet) != NULL){
+	    if (iFirst < 2){
+		iFirst++;
+		continue;
+	    }			
+	    iSize = (giNetCnt + 1) * sizeof (struct gstNet);
+	    pstNetCurrent = (struct gstNet *) realloc (pstNetCurrent, iSize);
+	    pcPos = buff;
+	    while(*pcPos == ' ')
+	        pcPos++;
+	    sscanf(pcPos, " %[^:]s", pstNetCurrent[giNetCnt].szName);
+	    pcPos = (char *)strchr(pcPos, ':') + 1;
+	    sscanf(pcPos, "%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu ",
+			&(pstNetCurrent[giNetCnt].ulRBytes), 
+			&(pstNetCurrent[giNetCnt].ulRPkts), 
+			&(pstNetCurrent[giNetCnt].ulRErrs), 
+			&(pstNetCurrent[giNetCnt].ulRDrop), 
+			&(pstNetCurrent[giNetCnt].ulRFifo), 
+			&(pstNetCurrent[giNetCnt].ulRFrame), 
+			&(pstNetCurrent[giNetCnt].ulRCompressed), 
+			&(pstNetCurrent[giNetCnt].ulRMultiCast), 
+			&(pstNetCurrent[giNetCnt].ulTBytes), 
+			&(pstNetCurrent[giNetCnt].ulTPkts), 
+			&(pstNetCurrent[giNetCnt].ulTErrs), 
+			&(pstNetCurrent[giNetCnt].ulTDrop), 
+			&(pstNetCurrent[giNetCnt].ulTFifo), 
+			&(pstNetCurrent[giNetCnt].ulColls),
+			&(pstNetCurrent[giNetCnt].ulTCarrier),
+			&(pstNetCurrent[giNetCnt].ulTCompressed));
+            DEBUGMSGTL(("nuri/networkTable","networkTable_GetNet: name\n", pstNetCurrent[giNetCnt].szName));
+	    giNetCnt++;	
+	    memset(buff, '\0', 300);
+	}
+	gpstNetFirst = pstNetCurrent;
+        if(fpNet)
+	     fclose(fpNet);
+    }
+    else{
+		snmp_log(LOG_ERR,"/proc/net/dev open error\n");
     }
 }
