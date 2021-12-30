@@ -27,6 +27,18 @@ oid Swap_variables_oid[] = { 1,3,6,1,4,1,3204,1,3,26 };
 
 struct variable4 Swap_variables[] = {
 /*  magic number        , variable type , ro/rw , callback fn  , L, oidsuffix */
+#define SWAPNUMBYTEIN		1
+{SWAPNUMBYTEIN,  ASN_INTEGER,  RONLY ,  var_Swap, 1,  { 5 }},
+#define SWAPCHARSTRANSFERBYWRITE		2
+{SWAPCHARSTRANSFERBYWRITE,  ASN_COUNTER,  RONLY ,  var_Swap, 1,  { 1 }},
+#define SWAPNUMPROCESSINS		3
+{SWAPNUMPROCESSINS,  ASN_COUNTER,  RONLY ,  var_Swap, 1,  { 3 }},
+#define SWAPPROCESSCONTEXTSWITCH		4
+{SWAPPROCESSCONTEXTSWITCH,  ASN_COUNTER,  RONLY ,  var_Swap, 1,  { 2 }},
+#define SWAPNUMPROCESSOUTS		5
+{SWAPNUMPROCESSOUTS,  ASN_COUNTER,  RONLY ,  var_Swap, 1,  { 4 }},
+#define SWAPNUMBYTEOUT		6
+{SWAPNUMBYTEOUT,  ASN_INTEGER,  RONLY ,  var_Swap, 1,  { 6 }},
 
 };
 /*    (L = length of the oidsuffix) */
@@ -45,4 +57,67 @@ init_Swap(void)
                Swap_variables_oid);
 
     /* place any other initialization junk you need here */
+}
+
+/*
+ * var_Swap():
+ *   This function is called every time the agent gets a request for
+ *   a scalar variable that might be found within your mib section
+ *   registered above.  It is up to you to do the right thing and
+ *   return the correct value.
+ *     You should also correct the value of "var_len" if necessary.
+ *
+ *   Please see the documentation for more information about writing
+ *   module extensions, and check out the examples in the examples
+ *   and mibII directories.
+ */
+unsigned char *
+var_Swap(struct variable *vp, 
+                oid     *name, 
+                size_t  *length, 
+                int     exact, 
+                size_t  *var_len, 
+                WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+    static unsigned char string[SPRINT_MAX_LEN];
+    static oid objid[MAX_OID_LEN];
+    static struct counter64 c64;
+    static unsigned long ulCtxt;
+	
+    if (header_generic(vp,name,length,exact,var_len,write_method)
+                                  == MATCH_FAILED )
+    return NULL;
+
+    /* 
+   * this is where we do the value assignments for the mib results.
+   */
+    switch(vp->magic) {
+#if 0
+    case SWAPNUMBYTEIN:
+        VAR = VALUE;	/* XXX */
+        return (u_char*) &VAR;
+    case SWAPCHARSTRANSFERBYWRITE:
+        VAR = VALUE;	/* XXX */
+        return (u_char*) &VAR;
+    case SWAPNUMPROCESSINS:
+        VAR = VALUE;	/* XXX */
+        return (u_char*) &VAR;
+#endif    
+    case SWAPPROCESSCONTEXTSWITCH:
+	return (u_char*) &ulCtxt;
+#if 0    
+    case SWAPNUMPROCESSOUTS:
+        VAR = VALUE;	/* XXX */
+        return (u_char*) &VAR;
+    case SWAPNUMBYTEOUT:
+        VAR = VALUE;	/* XXX */
+        return (u_char*) &VAR;
+#endif
+	default:
+      ERROR_MSG("");
+    }
+    return NULL;
 }
