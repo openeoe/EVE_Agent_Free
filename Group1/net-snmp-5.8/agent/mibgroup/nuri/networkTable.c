@@ -32,6 +32,24 @@ oid networkTable_variables_oid[] = { 1,3,6,1,4,1,3204,1,3,25 };
 struct variable4 networkTable_variables[] = {
 /*  magic number        , variable type , ro/rw , callback fn  , L, oidsuffix */
 
+#define NETWORKINDEX		1
+{NETWORKINDEX,  ASN_UNSIGNED,  RONLY,   var_networkTable, 3,  { 1, 1, 1 }},
+#define NETWORKNICID		2
+{NETWORKNICID,  ASN_OCTET_STR,  RONLY,   var_networkTable, 3,  { 1, 1, 2 }},
+#define NETWORKPROTOCOL		3
+{NETWORKPROTOCOL,  ASN_OCTET_STR,  RONLY,   var_networkTable, 3,  { 1, 1, 3 }},
+#define NETWORKINPACKETS		4
+{NETWORKINPACKETS,  ASN_COUNTER,  RONLY,   var_networkTable, 3,  { 1, 1, 4 }},
+#define NETWORKOUTPACKETS		5
+{NETWORKOUTPACKETS,  ASN_COUNTER,  RONLY,   var_networkTable, 3,  { 1, 1, 5 }},
+#define NETWORKERRORCOUNT		6
+{NETWORKERRORCOUNT,  ASN_COUNTER,  RONLY,   var_networkTable, 3,  { 1, 1, 6 }},
+#define NETWORKINBYTES		7
+{NETWORKINBYTES,  ASN_INTEGER,  RONLY,   var_networkTable, 3,  { 1, 1, 7 }},
+#define NETWORKOUTBYTES		8
+{NETWORKOUTBYTES,  ASN_INTEGER,  RONLY,   var_networkTable, 3,  { 1, 1, 8 }},
+#define NETWORKCOLLISIONSRATE		9
+{NETWORKCOLLISIONSRATE,  ASN_INTEGER,  RONLY,   var_networkTable, 3,  { 1, 1, 9 }},
 };
 /*    (L = length of the oidsuffix) */
 
@@ -56,11 +74,85 @@ struct gstNet{
 	unsigned long ulTCompressed;
 };
 
+void networkTable_Init();
+int  networkTable_GetNextNet();
+
 static struct gstNet *gpstNetFirst = NULL;
 static struct gstNet *gpstNetStat = NULL;
 static int giNetIdx = 0;
 static int giNetCnt = 0;
 netsnmp_interface_entry * entry;
+
+int
+header_networkTable(struct variable *vp, 
+                oid     *name, 
+                size_t  *length, 
+                int     exact, 
+                size_t  *var_len, 
+                WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+//    static unsigned char string[SPRINT_MAX_LEN];
+//    static oid objid[MAX_OID_LEN];
+//    static struct counter64 c64;
+
+  #define NAME_LENGTH    13
+    oid             newname[MAX_OID_LEN];
+    int             iNetIdx=0;
+    int             iLowIndex = -1;
+    int             iResult=0;
+    char * if_name;
+
+    DEBUGMSGTL(("enterprise/networkTable", "header_networkTable: "));
+    DEBUGMSGOID(("enterprise/networkTable", name, *length));
+    DEBUGMSG(("enterprise/networkTable", " %d\n", exact));
+
+    memcpy((char *) newname, (char *) vp->name, vp->namelen * sizeof(oid));
+    /*
+     * Find "next" Processor Entry
+     */
+    Interface_Scan_Init();
+    networkTable_Init();
+    for (;;) {
+        iNetIdx = networkTable_GetNextNet();
+        if (iNetIdx == -1)
+            break;
+        
+        if_name = netsnmp_access_interface_name_find(iNetIdx);
+        Interface_Scan_Next(&iNetIdx, if_name, &entry, NULL);
+
+        newname[NAME_LENGTH] = iNetIdx;
+        iResult = snmp_oid_compare(name, *length, newname, vp->namelen + 1);
+        if (exact && (iResult == 0)) {
+            iLowIndex = iNetIdx;
+            break;
+        }
+        if ((!exact && (iResult < 0)) &&
+            (iLowIndex == -1 || iNetIdx < iLowIndex)) {
+            iLowIndex = iNetIdx;
+#ifdef NET_MONOTONICALLY_INCREASING
+            break;
+#endif
+        }
+    }
+
+    if (iLowIndex == -1) {
+        DEBUGMSGTL(("enterprise/networkTable", "... index out of range\n"));
+        return (MATCH_FAILED);
+    }
+
+    memcpy((char *) name, (char *) newname, (vp->namelen + 1) * sizeof(oid));
+    *length = vp->namelen + 1;
+    *write_method = 0;
+    *var_len = sizeof(long);    /* default to 'long' results */
+
+    return iLowIndex;
+
+}
+
+
 
 /** Initializes the networkTable module */
 void
@@ -74,4 +166,154 @@ init_networkTable(void)
                networkTable_variables_oid);
 
     /* place any other initialization junk you need here */
+}
+
+/*
+ * var_networkTable():
+ *   Handle this table separately from the scalar value case.
+ *   The workings of this are basically the same as for var_ above.
+ */
+unsigned char *
+var_networkTable(struct variable *vp,
+    	    oid     *name,
+    	    size_t  *length,
+    	    int     exact,
+    	    size_t  *var_len,
+    	    WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+    static unsigned char string[SPRINT_MAX_LEN];
+    static oid objid[MAX_OID_LEN];
+    static struct counter64 c64;
+    static struct gstNet stNetStat;
+    char return_buf[256];
+    static int iNetIdx;
+    	    
+  /* 
+   * This assumes that the table is a 'simple' table.
+   *	See the implementation documentation for the meaning of this.
+   *	You will need to provide the correct value for the TABLE_SIZE parameter
+   *
+   * If this table does not meet the requirements for a simple table,
+   *	you will need to provide the replacement code yourself.
+   *	Mib2c is not smart enough to write this for you.
+   *    Again, see the implementation documentation for what is required.
+   */
+  /*
+   * if (header_simple_table(vp,name,length,exact,var_len,write_method, TABLE_SIZE)
+                                                == MATCH_FAILED )
+   * return NULL;
+   */
+   
+   iNetIdx = header_networkTable(vp, name, length, exact, var_len, write_method);
+   if (iNetIdx == MATCH_FAILED)
+   {
+    	free(gpstNetFirst);
+        gpstNetFirst = NULL;
+       	return NULL;
+   }
+   DEBUGMSGTL(("enterprise/networkTable", "count = %d\n", iNetIdx));
+
+   memcpy(&stNetStat, gpstNetStat, sizeof(struct gstNet));
+   free(gpstNetFirst);
+   gpstNetFirst = NULL;
+
+ /*
+  * if (Interface_Scan_By_Index(iNetIdx, &if_msg, if_name, &sifa) != 0)
+  *      return NULL;
+  */
+
+ /* 
+   * this is where we do the value assignments for the mib results.
+   */
+   *var_len = sizeof(unsigned long);
+    switch(vp->magic) {
+    case NETWORKINDEX:
+	 return (u_char*) &iNetIdx;
+    case NETWORKNICID:
+    {
+        int x;
+        for(x=0;x<entry->paddr_len;x++){
+            return_buf[x] = entry->paddr[x];
+        }
+        snmp_log(LOG_INFO,"name: %s, return_buf: %02X:%02X:%02X:%02X:%02X:%02X\n", 
+                entry->name,
+                return_buf[0] < 0 ? 256+return_buf[0]:return_buf[0], 
+                return_buf[1] < 0 ? 256+return_buf[1]:return_buf[1], 
+                return_buf[2] < 0 ? 256+return_buf[2]:return_buf[2], 
+                return_buf[3] < 0 ? 256+return_buf[3]:return_buf[3], 
+                return_buf[4] < 0 ? 256+return_buf[4]:return_buf[4], 
+                return_buf[5] < 0 ? 256+return_buf[5]:return_buf[5]);
+
+        *var_len = 6;
+        if ((return_buf[0] == 0) && (return_buf[1] == 0) &&
+            (return_buf[2] == 0) && (return_buf[3] == 0) &&
+            (return_buf[4] == 0) && (return_buf[5] == 0)){
+            *var_len = 0;
+        }
+        return (u_char *) return_buf; 
+#if 0
+    case NETWORKPROTOCOL:
+        VAR = VALUE;	/* XXX */
+        return (u_char*) &VAR;
+#endif
+    }
+    case NETWORKINPACKETS:
+        ulong_ret = stNetStat.ulRPkts;
+        return (u_char*) &ulong_ret;
+    case NETWORKOUTPACKETS:
+       ulong_ret = stNetStat.ulTPkts;
+       return (u_char*) &ulong_ret;
+    case NETWORKERRORCOUNT:
+       ulong_ret = stNetStat.ulRErrs + stNetStat.ulTErrs;
+       return (u_char*) &ulong_ret;
+    case NETWORKINBYTES:
+       ulong_ret = stNetStat.ulRBytes;
+       return (u_char*) &ulong_ret;
+    case NETWORKOUTBYTES:
+       ulong_ret = stNetStat.ulTBytes;
+       return (u_char*) &ulong_ret;
+    case NETWORKCOLLISIONSRATE:
+       ulong_ret = stNetStat.ulColls;
+       return (u_char*) &ulong_ret;
+    default:
+      ERROR_MSG("");
+    }
+    return NULL;
+}
+
+
+/*****************************************************************************
+ * name             :   networkTable_Init
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   void
+ * global variables :   giNetIdx
+ * calls            :   networkTable_GetNet
+ *****************************************************************************/
+void networkTable_Init(){
+  	giNetIdx = 1;
+}
+
+/*****************************************************************************
+ * name             :   networkTable_GetNextNet
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   int
+ * global variables :   gpstNetStat
+ * calls            :   void
+ *****************************************************************************/
+int networkTable_GetNextNet(){
+    if(giNetIdx <= giNetCnt){
+	gpstNetStat = &gpstNetFirst[giNetIdx - 1];
+        return (giNetIdx++);
+    }  
+    else{
+	gpstNetStat = NULL;
+        return -1;
+    }
 }
