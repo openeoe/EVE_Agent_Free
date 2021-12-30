@@ -177,6 +177,7 @@ void System_GetProcStat(u_long*, u_long*, u_long*, u_long*,
 void System_GetCpuStat(u_long *ulCUser, u_long *ulCNice, 
 		       u_long *ulCSys, u_long *ulCIdle);
 
+int System_CountUsers();
 u_long System_GetProcMryUsed();
 
 /* Global variable Declaration */
@@ -656,6 +657,30 @@ System_GetProcMryUsed(){
     if(pstProcDir)
         closedir(pstProcDir);
     return ulTPMryUsed;
+}
+
+/******************************************************************************
+ * name             :   System_CountUsers
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   unsigned long
+ * global variables :   None
+ * calls            :   void
+ *****************************************************************************/
+int
+System_CountUsers(){
+    
+    int            itotal = 0;
+    struct utmp    *pstUtmp = NULL;
+
+    setutent();
+    while ((pstUtmp = getutent()) != NULL) {
+        if (pstUtmp->ut_type == USER_PROCESS)
+            ++itotal;
+    }
+    endutent();
+    return itotal;
 }
 
 /*****************************************************************************
