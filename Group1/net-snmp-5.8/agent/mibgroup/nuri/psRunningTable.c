@@ -192,3 +192,33 @@ psRunningTable_GetProcStat(int pid, gstPsStat *pstPsStat) {
     pstPsStat->ulPsVmSize /= KBYTE;
     pstPsStat->ulPsVmRSS *= (PAGE_SIZE/KBYTE);
 }
+
+/*****************************************************************************
+ * name             :   psRunningTable_GetHandles
+ * description      :   
+ * input parameters :   pid
+ * output parameters:   None
+ * return type      :   int
+ * global variables :   None
+ * calls            :   void
+ *****************************************************************************/
+static int 
+psRunningTable_GetHandles(int iPid){
+	
+	int iHandles= 0;
+	static char szBuff[100];
+	static DIR *fdDir = NULL;
+	static struct dirent *pstFdDir=NULL;
+	strcpy(gString, "");
+	sprintf(gString, "/proc/%d/fd", iPid);
+	fdDir = opendir(gString);
+	if(fdDir == NULL)
+	    return iHandles;
+	while((pstFdDir = readdir(fdDir)) != NULL){
+	  if(!(strcmp(pstFdDir->d_name,".") && strcmp(pstFdDir->d_name,"..")))
+                continue;
+	   iHandles++;
+	}
+	closedir(fdDir);
+	return iHandles;
+}
