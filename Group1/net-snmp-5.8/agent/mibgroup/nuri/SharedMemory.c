@@ -96,3 +96,115 @@ init_SharedMemory(void)
 
     /* place any other initialization junk you need here */
 }
+
+/*****************************************************************************
+ * name             :   shmTable_GetShm
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   void
+ * global variables :   giShmCnt, gpstShmFirst
+ * calls            :   void
+ *****************************************************************************/
+void shmTable_GetShm(){
+    FILE	*fpShm = NULL;    
+    int         iFirst = 0;
+    int         iSize = 0;
+    char        buff[128];
+    struct gstShm *stShmCurrent = NULL;
+    struct shmid_ds stShm_ds;
+    int iIndex;
+
+    gettimeofday(&gstDCTimeVal, NULL);
+    giShmCnt = 0; 
+    if(fpShm != NULL)
+        fclose(fpShm); 
+    if ((fpShm = fopen(SHM_FILE, "r" )) != NULL){
+        memset(buff, '\0', 128);
+	while (fgets(buff, sizeof(buff), fpShm) != NULL){
+            if (iFirst == 0){
+		iFirst = 1;
+		continue;
+	    }			
+	    iSize = (giShmCnt + 1) * sizeof (struct gstShm);
+	    stShmCurrent = (struct gstShm *) realloc (stShmCurrent, iSize);
+	    sscanf(buff, " %d %lu %d %lu %lu %lu %ld %d %d %d %d %lu %lu %lu ",
+				&(stShmCurrent[giShmCnt].uiKey), 
+				&(stShmCurrent[giShmCnt].ulShmId), 
+				&(stShmCurrent[giShmCnt].uiPerms), 
+				&(stShmCurrent[giShmCnt].ulSize), 
+				&(stShmCurrent[giShmCnt].ulCpId), 
+				&(stShmCurrent[giShmCnt].ulLpId), 
+				&(stShmCurrent[giShmCnt].uiNAttach), 
+				&(stShmCurrent[giShmCnt].uiUID), 
+				&(stShmCurrent[giShmCnt].uiGID), 
+				&(stShmCurrent[giShmCnt].uiCUID), 
+				&(stShmCurrent[giShmCnt].uiCGID), 
+				&(stShmCurrent[giShmCnt].ulATime), 
+				&(stShmCurrent[giShmCnt].ulDTime), 
+				&(stShmCurrent[giShmCnt].ulCTime));
+	
+	    giShmCnt++;	
+            memset(buff, '\0', 128);
+	}
+	gpstShmFirst = stShmCurrent;
+        if(fpShm)
+    	     fclose(fpShm);
+	
+	for(iIndex = 0; iIndex < giShmCnt; iIndex++){
+            shmctl(gpstShmFirst[iIndex].ulShmId, IPC_STAT, &stShm_ds);
+
+        /* Total shared memory used */
+            gulTotalShm += stShm_ds.shm_segsz;  
+
+            if(iIndex == 0){
+            /* Assume first shared memory segment is min and max used */
+                gulMinShmUsed = stShm_ds.shm_segsz;
+                gulMaxShmUsed = stShm_ds.shm_segsz;
+            } 
+            else{
+ 
+            /* Minimum shared memory used */
+                if(stShm_ds.shm_segsz < gulMinShmUsed){
+                    gulMinShmUsed = stShm_ds.shm_segsz;
+                }
+
+            /* Maximum shared memory used */
+                if(stShm_ds.shm_segsz > gulMaxShmUsed){
+                    gulMaxShmUsed = stShm_ds.shm_segsz;
+                }
+            }    
+        
+        /* Find out min, max and avg. shared mem. Ids used */
+
+            if (giMinIdsUsed == 0 && giMaxIdsUsed == 0 && giAvgIdsUsed == 0){
+                giMinIdsUsed  = giShmCnt;
+                giMaxIdsUsed  = giShmCnt;
+                giAvgIdsUsed  = giShmCnt;
+                giShMIdsSaved = giShmCnt;
+            }
+            else{
+                if (giShmCnt < giMinIdsUsed)
+                    giMinIdsUsed = giShmCnt;
+                else if (giShmCnt > giMaxIdsUsed)
+                    giMaxIdsUsed = giShmCnt;
+
+                giAvgIdsUsed = (giShmCnt + giShMIdsSaved)/2;
+                giShMIdsSaved = giShmCnt;
+            }
+        } 
+        if(giShmCnt)
+             gulAvgShmUsed = gulTotalShm / giShmCnt;
+	else
+	     gulAvgShmUsed = 0;
+    
+        gulTotalShm /= KBYTE; /* Total shared memory used in KB */
+        gulAvgShmUsed /= KBYTE; /* Average shared memory used in KB */
+        gulMinShmUsed /= KBYTE; /* Minimum shared memory used in KB */
+        gulMaxShmUsed /= KBYTE; /* Maximum shared memory used in KB */
+    }
+    else{
+		snmp_log(LOG_ERR,"/proc/sysvipc/shm open error\n");
+    }
+}
+
