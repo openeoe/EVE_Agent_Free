@@ -37,6 +37,30 @@ oid SharedMemory_variables_oid[] = { 1,3,6,1,4,1,3204,1,3,27 };
 
 struct variable4 SharedMemory_variables[] = {
 /*  magic number        , variable type , ro/rw , callback fn  , L, oidsuffix */
+#define SHAREDMEMAVGUSEDKB		1
+{SHAREDMEMAVGUSEDKB,  ASN_INTEGER,  RONLY ,  var_SharedMemory, 1,  { 8 }},
+#define SHAREDMEMAVGIDSUSED		2
+{SHAREDMEMAVGIDSUSED,  ASN_INTEGER,  RONLY ,  var_SharedMemory, 1,  { 12 }},
+#define SHAREDMEMMINUSEDKB		3
+{SHAREDMEMMINUSEDKB,  ASN_INTEGER,  RONLY ,  var_SharedMemory, 1,  { 6 }},
+#define SHAREDMEMMAXSEGPERPROC		4
+{SHAREDMEMMAXSEGPERPROC,  ASN_INTEGER,  RONLY ,  var_SharedMemory, 1,  { 4 }},
+#define SHAREDMEMNUMOFIDSUSED		5
+{SHAREDMEMNUMOFIDSUSED,  ASN_INTEGER,  RONLY ,  var_SharedMemory, 1,  { 5 }},
+#define SHAREDMEMMAXIDSUSED		6
+{SHAREDMEMMAXIDSUSED,  ASN_INTEGER,  RONLY ,  var_SharedMemory, 1,  { 11 }},
+#define SHAREDMEMMINSIZE		7
+{SHAREDMEMMINSIZE,  ASN_INTEGER,  RONLY ,  var_SharedMemory, 1,  { 2 }},
+#define SHAREDMEMMAXSIZE		8
+{SHAREDMEMMAXSIZE,  ASN_INTEGER,  RONLY ,  var_SharedMemory, 1,  { 1 }},
+#define SHAREDMEMTOTALUSEDKB		9
+{SHAREDMEMTOTALUSEDKB,  ASN_INTEGER,  RONLY ,  var_SharedMemory, 1,  { 9 }},
+#define SHAREDMEMMAXUSEDKB		10
+{SHAREDMEMMAXUSEDKB,  ASN_INTEGER,  RONLY ,  var_SharedMemory, 1,  { 7 }},
+#define SHAREDMEMTOTALNUMIDS		11
+{SHAREDMEMTOTALNUMIDS,  ASN_INTEGER,  RONLY ,  var_SharedMemory, 1,  { 3 }},
+#define SHAREDMEMMINIDSUSED		12
+{SHAREDMEMMINIDSUSED,  ASN_INTEGER,  RONLY ,  var_SharedMemory, 1,  { 10 }},
 
 };
 /*    (L = length of the oidsuffix) */
@@ -95,6 +119,91 @@ init_SharedMemory(void)
                SharedMemory_variables_oid);
 
     /* place any other initialization junk you need here */
+}
+
+
+
+/*
+ * var_SharedMemory():
+ *   This function is called every time the agent gets a request for
+ *   a scalar variable that might be found within your mib section
+ *   registered above.  It is up to you to do the right thing and
+ *   return the correct value.
+ *     You should also correct the value of "var_len" if necessary.
+ *
+ *   Please see the documentation for more information about writing
+ *   module extensions, and check out the examples in the examples
+ *   and mibII directories.
+ */
+unsigned char *
+var_SharedMemory(struct variable *vp,
+                oid     *name,
+                size_t  *length,
+                int     exact,
+                size_t  *var_len,
+                WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+    static unsigned char string[SPRINT_MAX_LEN];
+    static oid objid[MAX_OID_LEN];
+    static struct counter64 c64;
+    struct timeval stDCTimeStamp = {0};
+    static struct shminfo stShmInfo;
+
+    if (header_generic(vp,name,length,exact,var_len,write_method)
+                                  == MATCH_FAILED )
+        return NULL;
+
+    gettimeofday(&stDCTimeStamp, NULL);
+
+    stDCTimeStamp.tv_sec = stDCTimeStamp.tv_sec - gstDCTimeVal.tv_sec;
+    stDCTimeStamp.tv_usec = stDCTimeStamp.tv_usec - gstDCTimeVal.tv_usec;
+    ulong_ret = stDCTimeStamp.tv_sec + (stDCTimeStamp.tv_usec / MICROSEC); 
+    if(ulong_ret > CACHE_TIMEOUT){
+        shmTable_GetShm();  
+        if ((shmctl (0, IPC_INFO, (struct shmid_ds *) &stShmInfo)) < 0 ){
+		return NULL;
+        }
+    }
+    *var_len = sizeof(ulong_ret);
+
+  /*
+   * this is where we do the value assignments for the mib results.
+   */
+    switch(vp->magic) {
+    case SHAREDMEMAVGUSEDKB:
+        return (u_char*) &gulAvgShmUsed;
+    case SHAREDMEMAVGIDSUSED:
+        return (u_char*) &giAvgIdsUsed;
+    case SHAREDMEMMINUSEDKB:
+        return (u_char*) &gulMinShmUsed;
+    case SHAREDMEMMAXSEGPERPROC:
+        return (u_char*) &(stShmInfo.shmseg);
+    case SHAREDMEMNUMOFIDSUSED:
+        *var_len = sizeof(giShmCnt);	
+        return (u_char*) &giShmCnt;
+    case SHAREDMEMMAXIDSUSED:
+        *var_len = sizeof(giMaxIdsUsed);
+        return (u_char*) &giMaxIdsUsed;
+    case SHAREDMEMMINSIZE:
+        return (u_char*) &(stShmInfo.shmmin);
+    case SHAREDMEMMAXSIZE:
+        return (u_char*) &(stShmInfo.shmmax);
+    case SHAREDMEMTOTALUSEDKB:
+        return (u_char*) &gulTotalShm;
+    case SHAREDMEMMAXUSEDKB:
+        return (u_char*) &gulMaxShmUsed;
+    case SHAREDMEMTOTALNUMIDS:
+        return (u_char*) &(stShmInfo.shmmni);
+    case SHAREDMEMMINIDSUSED:
+        *var_len = sizeof(giMinIdsUsed);
+        return (u_char*) &giMinIdsUsed;
+    default:
+      ERROR_MSG("");
+    }
+    return NULL;
 }
 
 /*****************************************************************************
