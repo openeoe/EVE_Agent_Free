@@ -126,3 +126,69 @@ init_psRunningTable(void)
 
     /* place any other initialization junk you need here */
 }
+
+/*****************************************************************************
+ * name             :   psRunningTable_GetProcStat
+ * description      :   
+ * input parameters :   pid
+ * output parameters:   pstPsStat
+ * return type      :   int
+ * global variables :   None
+ * calls            :   void
+ *****************************************************************************/
+static int 
+psRunningTable_GetProcStat(int pid, gstPsStat *pstPsStat) {
+    char buf[800]; /* about 40 fields, 64-bit decimal is about 20 chars */
+    int num;	
+    int fd;
+    char* tmp;
+    struct stat sb; /* stat() used to get EUID */
+    
+    gettimeofday(&gstDCTimeVal, NULL);
+    snprintf(buf, 32, "/proc/%d/stat", pid);
+    if ( (fd = open(buf, O_RDONLY, 0) ) == -1 ) return 0;
+    num = read(fd, buf, sizeof buf - 1);
+    fstat(fd, &sb);
+    pstPsStat->iPsUid = sb.st_uid;
+    close(fd);
+    if(num<80) return 0;
+    buf[num] = '\0';
+    tmp = strrchr(buf, ')');      /* split into "PID (cmd" and "<rest>" */
+    *tmp = '\0';                  /* replace trailing ')' with NUL */
+    /* parse these two gStrings separately, skipping the leading "(". */
+    memset(pstPsStat->szPsName, 0, sizeof(pstPsStat->szPsName));          /* clear */
+
+    sscanf(buf, "%d (%15c", &pstPsStat->iPsPid, pstPsStat->szPsName);  /* comm[16] in kernel */
+	num = sscanf(tmp + 2,                    /* skip space after ')' too */
+       "%c "
+       "%d %d %d %d %d "
+       "%lu %lu %lu %lu %lu %ld %ld "
+       "%ld %ld %ld %ld %ld %ld "
+       "%lu %lu "
+       "%lu %lu ",
+           &pstPsStat->cPsState,
+           &pstPsStat->iPsPPid, 
+	   &pstPsStat->iPsGid, 
+	   &pstPsStat->iPsSession, 
+	   &pstPsStat->iPsTTY, 
+	   &pstPsStat->iPsTpGID,
+           &pstPsStat->ulPsFlags, 
+	   &pstPsStat->ulPsMin_Flt, 
+	   &pstPsStat->ulPsCMin_Flt, 
+	   &pstPsStat->ulPsMaj_Flt, 
+	   &pstPsStat->ulPsCMaj_Flt, 
+	   &pstPsStat->lPsUTime, 
+	   &pstPsStat->lPsSTime,
+           &pstPsStat->lPsCUTime, 
+	   &pstPsStat->lPsCSTime, 
+	   &pstPsStat->lPsPriority, 
+	   &pstPsStat->lPsNice, 
+	   &pstPsStat->lPsTimeout, 
+	   &pstPsStat->lPsIt_Real_Value,
+           &pstPsStat->ulPsStartTime, 
+	   &pstPsStat->ulPsVmSize,
+           &pstPsStat->ulPsVmRSS, 
+	   &pstPsStat->ulPsVmRSS_rlimit);
+    pstPsStat->ulPsVmSize /= KBYTE;
+    pstPsStat->ulPsVmRSS *= (PAGE_SIZE/KBYTE);
+}
