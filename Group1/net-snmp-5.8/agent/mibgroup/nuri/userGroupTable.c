@@ -116,3 +116,31 @@ init_userGroupTable(void)
 
     /* place any other initialization junk you need here */
 }
+
+/*****************************************************************************
+ * name             :   userGroupGetData
+ * description      :   This function gives the number of Group 
+ * input parameters :   None
+ * output parameters:  
+ * return type      :
+ * global variables :   gmaxgroup
+ * calls            :   None
+ *****************************************************************************/
+
+void userGroupData(void)
+{ 
+  gmaxgroup=0;
+  /* Get current time - For Data caching */
+DEBUGMSGTL(("userGroupTable","Get Group Called\n"));
+ 
+ gettimeofday(&gsttDCTimeVal, NULL);
+  setgrent();
+  while(1)
+  {
+    gp=getgrent();
+    if(gp==NULL)
+    break;
+    gmaxgroup++;
+  }
+  endgrent();
+}
