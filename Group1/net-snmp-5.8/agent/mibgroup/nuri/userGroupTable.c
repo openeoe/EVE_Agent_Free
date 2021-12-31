@@ -144,3 +144,59 @@ DEBUGMSGTL(("userGroupTable","Get Group Called\n"));
   }
   endgrent();
 }
+
+int
+write_userGroupID(int      action,
+            u_char   *var_val,
+            u_char   var_val_type,
+            size_t   var_val_len,
+            u_char   *statP,
+            oid      *name,
+            size_t   name_len)
+{
+    long value;
+    int size;
+
+    switch ( action ) {
+        case RESERVE1:
+          if (var_val_type != ASN_INTEGER) {
+              fprintf(stderr, "write to userGroupTable not ASN_INTEGER\n");
+              return SNMP_ERR_WRONGTYPE;
+          }
+          if (var_val_len > sizeof(long)) {
+              fprintf(stderr,"write to userGroupTable: bad length\n");
+              return SNMP_ERR_WRONGLENGTH;
+          }
+          break;
+
+        case RESERVE2:
+          size  = var_val_len;
+          value = * (long *) var_val;
+
+          break;
+
+        case FREE:
+             /* Release any resources that have been allocated */
+          break;
+
+        case ACTION:
+             /*
+              * The variable has been stored in 'value' for you to use,
+              * and you have just been asked to do something with it.
+              * Note that anything done here must be reversable in the UNDO case
+              */
+          break;
+
+        case UNDO:
+             /* Back out any changes made in the ACTION case */
+          break;
+
+        case COMMIT:
+             /*
+              * Things are working well, so it's now safe to make the change
+              * permanently.  Make sure that anything done here can't fail!
+              */
+          break;
+    }
+    return SNMP_ERR_NOERROR;
+}
