@@ -32,6 +32,34 @@ oid Semaphore_variables_oid[] = { 1,3,6,1,4,1,3204,1,3,28 };
 
 struct variable4 Semaphore_variables[] = {
 /*  magic number        , variable type , ro/rw , callback fn  , L, oidsuffix */
+#define SEMAPHORETOTALUNDOSTRUCTS		1
+{SEMAPHORETOTALUNDOSTRUCTS,  ASN_INTEGER,  RONLY ,  var_Semaphore, 1,  { 4 }},
+#define SEMAPHORENUMIDSUSED		2
+{SEMAPHORENUMIDSUSED,  ASN_INTEGER,  RONLY ,  var_Semaphore, 1,  { 11 }},
+#define SEMAPHOREMAXNUMOPERATIONS		3
+{SEMAPHOREMAXNUMOPERATIONS,  ASN_INTEGER,  RONLY ,  var_Semaphore, 1,  { 6 }},
+#define SEMAPHOREMINIDSUSED		4
+{SEMAPHOREMINIDSUSED,  ASN_INTEGER,  RONLY ,  var_Semaphore, 1,  { 12 }},
+#define SEMAPHORERESOURCEMAPSIZE		5
+{SEMAPHORERESOURCEMAPSIZE,  ASN_INTEGER,  RONLY ,  var_Semaphore, 1,  { 1 }},
+#define SEMAPHOREMAXNUMUNDOENTRIES		6
+{SEMAPHOREMAXNUMUNDOENTRIES,  ASN_INTEGER,  RONLY ,  var_Semaphore, 1,  { 7 }},
+#define SEMAPHOREMAXVALUE		7
+{SEMAPHOREMAXVALUE,  ASN_INTEGER,  RONLY ,  var_Semaphore, 1,  { 9 }},
+#define SEMAPHORETOTAL		8
+{SEMAPHORETOTAL,  ASN_INTEGER,  RONLY ,  var_Semaphore, 1,  { 3 }},
+#define SEMAPHOREAVGIDSUSED		9
+{SEMAPHOREAVGIDSUSED,  ASN_INTEGER,  RONLY ,  var_Semaphore, 1,  { 14 }},
+#define SEMAPHOREMAXIDSUSED		10
+{SEMAPHOREMAXIDSUSED,  ASN_INTEGER,  RONLY ,  var_Semaphore, 1,  { 13 }},
+#define SEMAPHOREMAXNUMSEMSPERID		11
+{SEMAPHOREMAXNUMSEMSPERID,  ASN_INTEGER,  RONLY ,  var_Semaphore, 1,  { 5 }},
+#define SEMAPHORESIZEUNDOSTRUCTS		12
+{SEMAPHORESIZEUNDOSTRUCTS,  ASN_INTEGER,  RONLY ,  var_Semaphore, 1,  { 8 }},
+#define SEMAPHOREADJUSTEDMAXVALUE		13
+{SEMAPHOREADJUSTEDMAXVALUE,  ASN_INTEGER,  RONLY ,  var_Semaphore, 1,  { 10 }},
+#define SEMAPHORETOTALNUMIDS		14
+{SEMAPHORETOTALNUMIDS,  ASN_INTEGER,  RONLY ,  var_Semaphore, 1,  { 2 }},
 
 };
 /*    (L = length of the oidsuffix) */
@@ -88,6 +116,109 @@ init_Semaphore(void)
     /* place any other initialization junk you need here */
 }
 
+/*
+ * var_Semaphore():
+ *   This function is called every time the agent gets a request for
+ *   a scalar variable that might be found within your mib section
+ *   registered above.  It is up to you to do the right thing and
+ *   return the correct value.
+ *     You should also correct the value of "var_len" if necessary.
+ *
+ *   Please see the documentation for more information about writing
+ *   module extensions, and check out the examples in the examples
+ *   and mibII directories.
+ */
+unsigned char *
+var_Semaphore(struct variable *vp, 
+                oid     *name, 
+                size_t  *length, 
+                int     exact, 
+                size_t  *var_len, 
+                WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+    static unsigned char string[SPRINT_MAX_LEN];
+    static oid objid[MAX_OID_LEN];
+    static struct counter64 c64;
+
+    static int iSemIdx;
+  //  static struct semid_ds stSem_ds;
+    static struct seminfo stSemInfo;
+    static union semun stSemUn;
+    struct timeval stDCTimeStamp = {0};
+
+    if (header_generic(vp,name,length,exact,var_len,write_method)
+                                  == MATCH_FAILED )
+        return NULL;
+    
+    gettimeofday(&stDCTimeStamp, NULL);
+
+    stDCTimeStamp.tv_sec = stDCTimeStamp.tv_sec - gstDCTimeVal.tv_sec;
+    stDCTimeStamp.tv_usec = stDCTimeStamp.tv_usec - gstDCTimeVal.tv_usec;
+    ulong_ret = stDCTimeStamp.tv_sec + (stDCTimeStamp.tv_usec / MICROSEC); 
+    if(ulong_ret > CACHE_TIMEOUT){
+       Semaphore_GetSem();
+       stSemUn.array = (ushort *) &stSemInfo;
+       if(semctl(0, 0, IPC_INFO, stSemUn) < 0)
+	    return NULL; 
+    }
+    *var_len = sizeof(u_long);
+
+  /* 
+   * this is where we do the value assignments for the mib results.
+   */
+    switch(vp->magic) {
+    case SEMAPHORETOTALUNDOSTRUCTS:
+        ulong_ret = stSemInfo.semmnu;
+        return (u_char*) &ulong_ret;
+    case SEMAPHORENUMIDSUSED:
+       *var_len = sizeof(giSemCnt);
+        return (u_char*) &giSemCnt;
+    case SEMAPHOREMAXNUMOPERATIONS:
+       ulong_ret = stSemInfo.semopm;
+       return (u_char*) &ulong_ret;
+    case SEMAPHOREMINIDSUSED:
+       *var_len = sizeof(giMinIdsUsed);
+       return (u_char*) &giMinIdsUsed;
+    case SEMAPHORERESOURCEMAPSIZE:
+        ulong_ret = stSemInfo.semmap;
+        return (u_char*) &ulong_ret;
+    case SEMAPHOREMAXNUMUNDOENTRIES:
+        ulong_ret = stSemInfo.semume;
+        return (u_char*) &ulong_ret;
+    case SEMAPHOREMAXVALUE:
+       	ulong_ret = stSemInfo.semvmx;
+        return (u_char*) &ulong_ret;
+    case SEMAPHORETOTAL:
+        ulong_ret = stSemInfo.semmns;
+        return (u_char*) &ulong_ret;
+    case SEMAPHOREAVGIDSUSED:
+        *var_len = sizeof(giAvgIdsUsed);
+        return (u_char*) &giAvgIdsUsed;
+    case SEMAPHOREMAXIDSUSED:
+       *var_len = sizeof(giMaxIdsUsed);
+        return (u_char*) &giMaxIdsUsed;
+    case SEMAPHOREMAXNUMSEMSPERID:
+       ulong_ret = stSemInfo.semmsl;
+       return (u_char*) &ulong_ret;
+    case SEMAPHORESIZEUNDOSTRUCTS:
+       ulong_ret = stSemInfo.semusz;
+       return (u_char*) &ulong_ret;
+#if 0
+    case SEMAPHOREADJUSTEDMAXVALUE:
+        VAR = VALUE;	/* XXX */
+        return (u_char*) &VAR;
+#endif
+    case SEMAPHORETOTALNUMIDS:
+        ulong_ret = stSemInfo.semmni;
+        return (u_char*) &ulong_ret;
+    default:
+      ERROR_MSG("");
+    }
+    return NULL;
+}
 
 /*****************************************************************************
  * name             :   Semaphore_GetSem
