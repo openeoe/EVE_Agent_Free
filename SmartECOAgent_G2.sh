@@ -90,7 +90,7 @@ rm -rf config.cache
 make distclean
 
 echo "Building for Linux"
-./configure --with-mib-modules="mibII host nuri/cpuTable nuri/System nuri/partitionTable nuri/diskTable nuri/networkTable nuri/Swap nuri/MessageQueue nuri/psRunningTable nuri/fsTable $MIB_MODULES_G1" --with-out-mib-modules="ucd_snmp agent_mibs utilities host/hr_swinst" --without-openssl --with-enterprise-oid=46971 --with-enterprise-sysoid=.1.3.6.1.4.1.46971.3.2  --with-libs="-L/usr/local/lib  -lpthread" --with-cflags="-I/usr/local/include -I." 
+./configure --with-mib-modules="mibII host nuri/cpuTable nuri/System nuri/partitionTable nuri/diskTable nuri/networkTable nuri/Swap nuri/MessageQueue nuri/psRunningTable nuri/fsTable nuri/Semaphore $MIB_MODULES_G1" --with-out-mib-modules="ucd_snmp agent_mibs utilities host/hr_swinst" --without-openssl --with-enterprise-oid=46971 --with-enterprise-sysoid=.1.3.6.1.4.1.46971.3.2  --with-libs="-L/usr/local/lib  -lpthread" --with-cflags="-I/usr/local/include -I." 
 
 
 if [ $? -ne $ZERO ]
