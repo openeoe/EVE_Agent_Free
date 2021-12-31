@@ -122,3 +122,30 @@ init_userAccessControlTable(void)
                userAccessControlTable_variables_oid);
     /* place any other initialization junk you need here */
 }
+
+/*****************************************************************************
+ *
+ * name             :   GetUserData
+ * description      :   It will intialize the maxusers
+ * input parameters :   [void]  - No input Parameters
+ * output parameters:   [void] -  No output Parameters
+ * return type      :   [void] - No return type
+ * global variables :   [gflag=0, gmaxuser] 
+ * calls            :   [header_useraccess,init_userAcessControlTable]
+ */
+
+void GetUserData(void)
+{ 
+    DEBUGMSGTL(("userAccessControlTable", "GetUser Called\n"));
+    gmaxuser=0;
+    gettimeofday(&gusttDCTimeVal, NULL);
+    setpwent();
+    while(1)
+    {  pw=getpwent();
+       if (pw==(struct passwd *) NULL)
+           break;
+       gflag=0; 
+       gmaxuser++;
+    }
+    endpwent();
+}
