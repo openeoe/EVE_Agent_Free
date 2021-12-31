@@ -33,6 +33,40 @@ oid fsTable_variables_oid[] = { 1,3,6,1,4,1,3204,1,3,24 };
 struct variable4 fsTable_variables[] = {
 /*  magic number        , variable type , ro/rw , callback fn  , L, oidsuffix */
 
+#define FSINDEX		1
+{FSINDEX,  ASN_UNSIGNED,  RONLY,   var_fsTable, 3,  { 1, 1, 1 }},
+#define FSID		2
+{FSID,  ASN_OCTET_STR,  RONLY,   var_fsTable, 3,  {  1, 1, 2 }},
+#define FSNAME		3
+{FSNAME,  ASN_OCTET_STR,  RONLY,   var_fsTable, 3,  {  1, 1, 3 }},
+#define FSCAPACITY		4
+{FSCAPACITY,  ASN_INTEGER,  RONLY,   var_fsTable, 3,  { 1, 1, 4 }},
+#define FSTYPE		5
+{FSTYPE,  ASN_OCTET_STR,  RONLY,   var_fsTable, 3,  { 1, 1, 5 }},
+#define FSFREE		6
+{FSFREE,  ASN_INTEGER,  RONLY,   var_fsTable, 3,  { 1, 1, 6 }},
+#define FSRATIO		7
+{FSRATIO,  ASN_INTEGER,  RONLY,   var_fsTable, 3,  { 1, 1, 7 }},
+#define FSUTILIZATION		8
+{FSUTILIZATION,  ASN_INTEGER,  RONLY,   var_fsTable, 3,  { 1, 1, 8 }},
+#define FSINODERATIO		9
+{FSINODERATIO,  ASN_INTEGER,  RONLY,   var_fsTable, 3,  { 1, 1, 9 }},
+#define FSLOGICALVOLNAME		10
+{FSLOGICALVOLNAME,  ASN_OCTET_STR,  RONLY,   var_fsTable, 3,  { 1, 1, 10 }},
+#define FSTOTALINODESINFS		11
+{FSTOTALINODESINFS,  ASN_INTEGER,  RONLY,   var_fsTable, 3,  { 1, 1, 11 }},
+#define FSFREEINODESINFS		12
+{FSFREEINODESINFS,  ASN_INTEGER,  RONLY,   var_fsTable, 3,  { 1, 1, 12 }},
+#define FSUSEDINODES		13
+{FSUSEDINODES,  ASN_INTEGER,  RONLY,   var_fsTable, 3,  { 1, 1, 13 }},
+#define FSUSERFREESPACE		14
+{FSUSERFREESPACE,  ASN_INTEGER,  RONLY,   var_fsTable, 3,  { 1, 1, 14 }},
+#define FSBLOCKSIZE		15
+{FSBLOCKSIZE,  ASN_INTEGER,  RONLY,   var_fsTable, 3,  { 1, 1, 15 }},
+#define FSFREEBLOCKS		16
+{FSFREEBLOCKS,  ASN_INTEGER,  RONLY,   var_fsTable, 3,  { 1, 1, 16 }},
+#define FSTOTALBLOCKS		17
+{FSTOTALBLOCKS,  ASN_INTEGER,  RONLY,   var_fsTable, 3,  { 1, 1, 17 }},
 };
 
 /* Extern Declaration */
