@@ -57,6 +57,8 @@ struct gstSem{
 #endif
 };
 
+/* Function Prototype */
+void Semaphore_GetSem();
 
 /* Global variable section */
 static struct gstSem *gpstSemFirst = NULL;
@@ -85,3 +87,95 @@ init_Semaphore(void)
                Semaphore_variables_oid);
     /* place any other initialization junk you need here */
 }
+
+
+/*****************************************************************************
+ * name             :   Semaphore_GetSem
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   void
+ * global variables :   giSemCnt, gpstSemFirst
+ * calls            :   void
+ *****************************************************************************/
+void Semaphore_GetSem(){
+    FILE	*fpSem;    
+    int         iFirst = 0;
+    char        buff[128];
+    struct gstSem *stSemCurrent = NULL;
+    int iIndex;
+    
+    gettimeofday(&gstDCTimeVal, NULL); 
+    giSemCnt = 0; 
+  
+    if ((fpSem = fopen(SEM_FILE, "r" )) != NULL) {
+	memset(buff, '\0', 128);
+	while (fgets(buff, sizeof(buff), fpSem) != NULL) {
+	    if (iFirst == 0){
+		iFirst = 1;
+		continue;
+	    }			
+	    stSemCurrent = (struct gstSem *) malloc (sizeof(struct gstSem));
+
+	/*	sscanf(buff, " %d %lu %d %lu %lu %lu %ld %d %d %d %d %lu %lu %lu ",
+				&(stSemCurrent->uiKey), 
+				&(stSemCurrent->ulSemId), 
+				&(stSemCurrent->uiPerms), 
+				&(stSemCurrent->ulSize), 
+				&(stSemCurrent->ulCpId), 
+				&(stSemCurrent->ulLpId), 
+				&(stSemCurrent->uiNAttach), 
+				&(stSemCurrent->uiUID), 
+				&(stSemCurrent->uiGID), 
+				&(stSemCurrent->uiCUID), 
+				&(stSemCurrent->uiCGID), 
+				&(stSemCurrent->ulATime), 
+				&(stSemCurrent->ulDTime), 
+				&(stSemCurrent->ulCTime));
+        */
+
+	   sscanf(buff, " %d %lu ",
+				&(stSemCurrent->uiKey), 
+				&(stSemCurrent->ulSemId));
+	   giSemCnt++;	
+           memset(buff, '\0', 128);
+	}
+
+//	gpstSemFirst = stSemCurrent;
+        if(stSemCurrent){
+            free(stSemCurrent);
+            stSemCurrent = NULL;
+        } 
+        if(fpSem)
+    	    fclose(fpSem);
+
+	for (iIndex=0; iIndex < giSemCnt; iIndex++){
+
+        /* Find out min, max and avg. semaphore Ids used */
+            if (giMinIdsUsed == 0 && giMaxIdsUsed == 0 && giAvgIdsUsed == 0){
+                giMinIdsUsed = giSemCnt;
+                giMaxIdsUsed = giSemCnt;
+                giAvgIdsUsed = giSemCnt;
+                giSemIdsSaved = giSemCnt;
+            }
+            else{
+                if (giSemCnt < giMinIdsUsed)
+                    giMinIdsUsed = giSemCnt;
+                else if (giSemCnt > giMaxIdsUsed)
+                    giMaxIdsUsed = giSemCnt;
+                giAvgIdsUsed = (giSemCnt + giSemIdsSaved)/2;
+                giSemIdsSaved = giSemCnt;
+            }
+
+        }
+    }
+    else{
+	snmp_log(LOG_ERR, "/proc/sysvipc/sem open error\n");
+    }
+
+}
+
+
+
+
+
