@@ -62,6 +62,22 @@ struct variable4 SharedMemory_variables[] = {
 #define SHAREDMEMMINIDSUSED		12
 {SHAREDMEMMINIDSUSED,  ASN_INTEGER,  RONLY ,  var_SharedMemory, 1,  { 10 }},
 
+#define SHAREDMEMINDEX		13
+{SHAREDMEMINDEX,  ASN_UNSIGNED,  RONLY,   var_sharedMemTable, 3,  { 13, 1, 1 }},
+#define SHAREDMEMID		14
+{SHAREDMEMID,  ASN_OCTET_STR,  RONLY,   var_sharedMemTable, 3,  { 13, 1, 2 }},
+#define SHAREDMEMKEY		15
+{SHAREDMEMKEY,  ASN_INTEGER,  RONLY,   var_sharedMemTable, 3,  { 13, 1, 3 }},
+#define SHAREDMEMMODE		16
+{SHAREDMEMMODE,  ASN_INTEGER,  RONLY,   var_sharedMemTable, 3,  { 13, 1, 4 }},
+#define SHAREDMEMOWNER		17
+{SHAREDMEMOWNER,  ASN_OCTET_STR,  RONLY,   var_sharedMemTable, 3,  { 13, 1, 5 }},
+#define SHAREDMEMGROUP		18
+{SHAREDMEMGROUP,  ASN_OCTET_STR,  RONLY,   var_sharedMemTable, 3,  { 13, 1, 6 }},
+#define SHAREDMEMCREATOR		19
+{SHAREDMEMCREATOR,  ASN_OCTET_STR,  RONLY,   var_sharedMemTable, 3,  { 13, 1, 7 }},
+#define SHAREDMEMCREATORGROUP		20
+{SHAREDMEMCREATORGROUP,  ASN_OCTET_STR,  RONLY,   var_sharedMemTable, 3,  { 13, 1, 8 }},
 };
 /*    (L = length of the oidsuffix) */
 
@@ -121,6 +137,71 @@ init_SharedMemory(void)
     /* place any other initialization junk you need here */
 }
 
+int
+header_sharedMemTable(struct variable *vp, 
+                oid     *name, 
+                size_t  *length, 
+                int     exact, 
+                size_t  *var_len, 
+                WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+//    static unsigned char string[SPRINT_MAX_LEN];
+//    static oid objid[MAX_OID_LEN];
+//    static struct counter64 c64;
+
+  #define NAME_LENGTH    13
+    oid             newname[MAX_OID_LEN];
+    int             iShmIdx=0;
+    int             iLowIndex = -1;
+    int             iResult=0;
+
+    DEBUGMSGTL(("nuri/SharedMemory", "header_SharedMemory: "));
+    DEBUGMSGOID(("nuri/SharedMemory", name, *length));
+    DEBUGMSG(("nuri/SharedMemory", " %d\n", exact));
+
+    memcpy((char *) newname, (char *) vp->name, vp->namelen * sizeof(oid));
+    /*
+     * Find "next" Shm Entry
+     */
+
+    sharedMemTable_Init();
+    for (;;) {
+        iShmIdx = sharedMemTable_GetNextShm();
+        if (iShmIdx == -1)
+            break;
+        newname[NAME_LENGTH] = iShmIdx;
+        iResult = snmp_oid_compare(name, *length, newname, vp->namelen + 1);
+        if (exact && (iResult == 0)) {
+            iLowIndex = iShmIdx;
+            break;
+        }
+        if ((!exact && (iResult < 0)) &&
+            (iLowIndex == -1 || iShmIdx < iLowIndex)) {
+            iLowIndex = iShmIdx;
+#ifdef SHM_MONOTONICALLY_INCREASING
+            break;
+#endif
+        }
+    }
+
+    if (iLowIndex == -1) {
+        DEBUGMSGTL(("nuri/SharedMemory", "... index out of range\n"));
+        return (MATCH_FAILED);
+    }
+
+    memcpy((char *) name, (char *) newname,
+
+          (vp->namelen + 1) * sizeof(oid));
+    *length = vp->namelen + 1;
+    *write_method = 0;
+    *var_len = sizeof(long);    /* default to 'long' results */
+
+    return iLowIndex;
+
+}
 
 
 /*
@@ -204,6 +285,148 @@ var_SharedMemory(struct variable *vp,
       ERROR_MSG("");
     }
     return NULL;
+}
+
+
+/*
+ * var_sharedMemTable():
+ *   Handle this table separately from the scalar value case.
+ *   The workings of this are basically the same as for var_ above.
+ */
+unsigned char *
+var_sharedMemTable(struct variable *vp,
+    	    oid     *name,
+    	    size_t  *length,
+    	    int     exact,
+    	    size_t  *var_len,
+    	    WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+    static unsigned char string[SPRINT_MAX_LEN];
+    static oid objid[MAX_OID_LEN];
+    static struct counter64 c64;
+    static struct gstShm pstShmStat;
+   // static struct ipc_perm *pstIpc = &stShm_ds.shm_perm;
+    static struct passwd *psPasswd = NULL;
+    static struct group *psGroup = NULL;
+    static int iShmIdx;
+    /*
+   * This assumes that the table is a 'simple' table.
+   *	See the implementation documentation for the meaning of this.
+   *	You will need to provide the correct value for the TABLE_SIZE parameter
+   *
+   * If this table does not meet the requirements for a simple table,
+   *	you will need to provide the replacement code yourself.
+   *	Mib2c is not smart enough to write this for you.
+   *    Again, see the implementation documentation for what is required.
+   */
+   if (( iShmIdx = header_sharedMemTable(vp,name,length,exact,var_len,write_method)) == MATCH_FAILED )
+   {
+   		free(gpstShmFirst);
+                gpstShmFirst = NULL;
+   		return NULL;
+   
+   }
+   if(gpstShmStat){
+       memcpy(&pstShmStat, gpstShmStat, sizeof(struct gstShm));
+       free(gpstShmFirst);
+       gpstShmFirst = NULL;
+   }
+   else{
+       return NULL;
+   }
+    
+    /*
+   * this is where we do the value assignments for the mib results.
+   */
+    switch(vp->magic) {
+    
+    case SHAREDMEMINDEX:
+	ulong_ret = iShmIdx;
+        return (u_char*) &ulong_ret;
+    case SHAREDMEMID:
+        sprintf(string,"%lu", pstShmStat.ulShmId); 
+        *var_len = strlen(string);
+        return (u_char*) string;
+    case SHAREDMEMKEY:
+        ulong_ret = pstShmStat.uiKey;
+        return (u_char*) &ulong_ret;
+    case SHAREDMEMMODE:
+        ulong_ret = pstShmStat.uiPerms;
+        return (u_char*) &ulong_ret;
+    case SHAREDMEMOWNER:
+	psPasswd = getpwuid(pstShmStat.uiUID);
+	if(psPasswd != NULL)
+            strcpy(string, psPasswd->pw_name); 
+	else
+	    strcpy(string, "");
+	*var_len = strlen(string);	
+	return (u_char*) string;
+    case SHAREDMEMGROUP:
+	psGroup = getgrgid(pstShmStat.uiGID);
+	if(psGroup != NULL)
+	    strcpy(string, psGroup->gr_name); 
+	else
+	    strcpy(string, "");
+	*var_len = strlen(string);	
+	return (u_char*) string;
+    case SHAREDMEMCREATOR:
+        psPasswd = getpwuid(pstShmStat.uiCUID);
+	if(psPasswd != NULL)
+	    strcpy(string, psPasswd->pw_name); 
+	else
+	    strcpy(string, "");
+	*var_len = strlen(string);	
+	return (u_char*) string;
+    case SHAREDMEMCREATORGROUP:
+	psGroup = getgrgid(pstShmStat.uiCGID);
+	if(psGroup != NULL)
+	    sprintf(string, psGroup->gr_name); 
+	else
+	    strcpy(string, "");
+	*var_len = strlen(string);	
+	return (u_char*) string;
+    default:
+      ERROR_MSG("");
+    }
+    return NULL;
+}
+
+/*****************************************************************************
+ * name             :   sharedMemTable_Init
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   void
+ * global variables :   giShmIdx
+ * calls            :   shmTable_GetShm
+ *****************************************************************************/
+void sharedMemTable_Init(){
+	giShmIdx = 1;
+	shmTable_GetShm();
+}
+
+
+/*****************************************************************************
+ * name             :   sharedMemTable_GetNextShm
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   int
+ * global variables :   gpstShmStat
+ * calls            :   void
+ *****************************************************************************/
+int sharedMemTable_GetNextShm(){
+    if(giShmIdx <= giShmCnt){
+	gpstShmStat = &gpstShmFirst[giShmIdx - 1];
+        return (giShmIdx++);
+    }  
+    else{
+	gpstShmStat = NULL;
+        return -1;
+    }
 }
 
 /*****************************************************************************
