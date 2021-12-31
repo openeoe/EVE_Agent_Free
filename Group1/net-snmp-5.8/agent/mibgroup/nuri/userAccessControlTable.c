@@ -106,6 +106,24 @@ oid userAccessControlTable_variables_oid[] = { 1,3,6,1,4,1,3204,1,3,34,4};
 struct variable4 userAccessControlTable_variables[] = {
 /*  magic number        , variable type , ro/rw , callback fn  , L, oidsuffix */
 
+#define USERACCESSCONTROLINDEX		1
+{USERACCESSCONTROLINDEX,  ASN_UNSIGNED,  RONLY,   var_userAccessControlTable, 3,  { 1, 1, 1 }},
+#define USERACCESSCONTROLID		2
+{USERACCESSCONTROLID,  ASN_OCTET_STR,  RWRITE,  var_userAccessControlTable, 3,  { 1, 1, 2 }},
+#define USERACCESSCONTROLPASSWORD		3
+{USERACCESSCONTROLPASSWORD,  ASN_OCTET_STR,  RWRITE,  var_userAccessControlTable, 3,  { 1, 1, 3 }},
+#define USERACCESSCONTROLNAME		4
+{USERACCESSCONTROLNAME,  ASN_OCTET_STR,  RWRITE,  var_userAccessControlTable, 3,  { 1, 1, 4 }},
+#define USERACCESSCONTROLDESCRIPTION		5
+{USERACCESSCONTROLDESCRIPTION,  ASN_OCTET_STR,  RWRITE,  var_userAccessControlTable, 3,  { 1, 1, 5 }},
+#define USERACCESSCONTROLGROUPID		6
+{USERACCESSCONTROLGROUPID,  ASN_INTEGER,  RWRITE,  var_userAccessControlTable, 3,  { 1, 1, 6 }},
+#define USERACCESSCONTROLCREATEDDATE		7
+{USERACCESSCONTROLCREATEDDATE,  ASN_OCTET_STR,  RWRITE,  var_userAccessControlTable, 3,  { 1, 1, 7 }},
+#define USERACCESSCONTROLUPDATEDDATE		8
+{USERACCESSCONTROLUPDATEDDATE,  ASN_OCTET_STR,  RWRITE,  var_userAccessControlTable, 3,  { 1, 1, 8 }},
+#define USERACCESSCONTROLSTATUS		9
+{USERACCESSCONTROLSTATUS,  ASN_INTEGER,  RWRITE,  var_userAccessControlTable, 3,  { 1, 1, 9 }},
 };
 /*    (L = length of the oidsuffix) */
 
@@ -149,6 +167,249 @@ void GetUserData(void)
     }
     endpwent();
 }
+
+/*****************************************************************************
+ *
+ * name             :   header_useraccessTable
+ * description      :   It will generate the index
+ * input parameters :   [struct variable *vp,
+ *                       oid * name,
+ *                        size_t * length,
+ *                        int exact, size_t * var_len, WriteMethod ** write_method]   
+ * output parameters:   [void] 
+ * return type      :   [int] - index  
+ * global variables :   
+ * calls            :   [var_useAccessControl]
+ */
+
+
+/*
+ * header_useraccessTable():
+ *   This function is called every time the agent gets a request for
+ *   a scalar variable that might be found within your mib section
+ *   registered above.  It is up to you to do the right thing and
+ *   return the correct value.
+ *     You should also correct the value of "var_len" if necessary.
+ *
+ *   Please see the documentation for more information about writing
+ *   module extensions, and check out the examples in the examples
+ *   and NuriEnterprise directories.
+ */
+int
+header_useraccessTable(struct variable *vp,
+                oid     *name,
+                size_t  *length,
+                int     exact,
+                size_t  *var_len,
+                WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret; static u_long ulong_ret;
+    static unsigned char string[SPRINT_MAX_LEN];
+    static oid objid[MAX_OID_LEN];
+    static struct counter64 c64;
+    #define NAME_LENGTH     14
+    oid             newname[MAX_OID_LEN];
+
+    int             uIdx, ILowIndex = -1;
+    int             IResult;
+
+
+    DEBUGMSGOID(("userAccessControlTable", name, *length));
+    DEBUGMSG(("userAccessControlTable", " %d\n", exact));
+
+    memcpy((char *) newname, (char *) vp->name, (int) vp->namelen * sizeof(oid))
+;
+
+     /* find "next" interface */
+
+    useraccessTable_Init ();
+
+    for (;;) {
+
+	uIdx = useraccessTable_GetNext ();
+        if (uIdx == -1)
+            break;
+        newname[NAME_LENGTH] = uIdx;
+        IResult = snmp_oid_compare(name, *length, newname, vp->namelen + 1);
+        if (exact && (IResult == 0)) {
+            ILowIndex = uIdx;
+            break;
+        }
+        if ((!exact && (IResult < 0)) &&
+            (ILowIndex == -1 || uIdx < ILowIndex)) {
+            ILowIndex = uIdx;
+#ifdef USERINDEX_MONOTONICALLY_INCREASING
+            break;
+#endif
+        }
+    }
+
+    endpwent();
+
+    if (ILowIndex == -1) {
+        DEBUGMSGTL(("userAccessControlTable", "... index out of range\n"));
+        return (MATCH_FAILED);
+    }
+
+    memcpy((char *) name, (char *) newname,
+
+   (vp->namelen + 1) * sizeof(oid));
+    *length = vp->namelen + 1;
+    *write_method = 0;
+    *var_len = sizeof(long);    /* default to 'long' results */
+
+    return ILowIndex;
+}
+
+/*****************************************************************************
+ * name             :   useraccessTable_Init
+ * description      :   Initializes the useraccess table index
+ * input parameters :   None
+ * output parameters:  
+ * return type      :
+ * global variables :   
+ * calls            :   None
+ *****************************************************************************/
+
+void useraccessTable_Init()
+{
+    setpwent ();
+    guserindex=1;
+}
+
+/*****************************************************************************
+ * name             :   useraccessTable_GetNextInterface
+ * input parameters :   None
+ * output parameters:   
+ * return type      :   void
+ * global variables :   
+ * calls            :   None
+ *****************************************************************************/
+int useraccessTable_GetNext()
+{ 
+        int i=0;
+
+        DEBUGMSGTL(("userAccessControlTable", "Inside useraccessTable_GetNext "
+                    "guserindex=%d, gmaxuser=%d\n", guserindex, gmaxuser));
+
+	if (guserindex<=gmaxuser)
+	{
+	          pw=getpwent();
+                  if (pw == (struct passwd *) NULL)
+                  {
+                     return -1; 
+                  }
+	          strcpy(userinfo.username,pw->pw_name);
+		  strcpy(userinfo.password,pw->pw_passwd);
+                  sprintf(userinfo.uid,"%d",pw->pw_uid);
+		  userinfo.gid=pw->pw_gid;
+                  if(pw->pw_gecos)
+                  strcpy(userinfo.desc,pw->pw_gecos); 
+		  return guserindex++;
+	}
+	else
+        {
+            return -1;
+        }
+}
+
+/*
+ * var_userAccessControlTable():
+ *   Handle this table separately from the scalar value case.
+ *   The workings of this are basically the same as for var_ above.
+ */
+unsigned char *
+var_userAccessControlTable(struct variable *vp,
+    	    oid     *name,
+    	    size_t  *length,
+    	    int     exact,
+    	    size_t  *var_len,
+    	    WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+    static unsigned char string[SPRINT_MAX_LEN];
+    static oid objid[MAX_OID_LEN];
+    static struct counter64 c64;
+    static int index;
+    static u_long ulong_retu;
+    static struct timeval stDCTimeStamp = {0};
+     
+/* 
+   * This assumes that the table is a 'simple' table.
+   *	See the implementation documentation for the meaning of this.
+   *	You will need to provide the correct value for the TABLE_SIZE parameter
+   *
+   * If this table does not meet the requirements for a simple table,
+   *	you will need to provide the replacement code yourself.
+   *	Mib2c is not smart enough to write this for you.
+   *    Again, see the implementation documentation for what is required.
+   */
+
+    gettimeofday(&stDCTimeStamp, NULL);
+
+    stDCTimeStamp.tv_sec = stDCTimeStamp.tv_sec - gusttDCTimeVal.tv_sec;
+    stDCTimeStamp.tv_usec = stDCTimeStamp.tv_usec - gusttDCTimeVal.tv_usec;
+    ulong_retu = stDCTimeStamp.tv_sec + (stDCTimeStamp.tv_usec/1000000);
+
+    if(ulong_retu > UCACHE_TIME)
+    {
+       /* CACHE_TIME elapsed bet'n two successive requests */
+       GetUserData();
+    }
+
+   index=header_useraccessTable(vp,name,length,exact,var_len,write_method);
+
+   if(index== MATCH_FAILED)
+    return NULL;
+
+    /* 
+   * this is where we do the value assignments for the mib results.
+   */
+    switch(vp->magic) {
+    case USERACCESSCONTROLINDEX:
+        *var_len=sizeof(index);
+	return (u_char*) &index;
+    case USERACCESSCONTROLID:
+      //  *write_method = write_userAccessControlID;
+	*var_len=strlen(userinfo.uid);
+        return (u_char*) userinfo.uid;
+   case USERACCESSCONTROLPASSWORD:
+       // *write_method = write_userAccessControlPassword;
+        *var_len=strlen(userinfo.password);
+        return (u_char*) userinfo.password;
+   case USERACCESSCONTROLNAME:
+        //*write_method = write_userAccessControlName;
+          *var_len=strlen(userinfo.username);
+          return (u_char*)userinfo.username;
+   case USERACCESSCONTROLDESCRIPTION:
+       // *write_method = write_userAccessControlDescription;
+        *var_len=strlen(userinfo.desc);
+        return (u_char*) userinfo.desc;
+   case USERACCESSCONTROLGROUPID:
+      // *write_method = write_userAccessControlGroupId;
+        *var_len=sizeof(userinfo.gid);
+        return (u_char*) &userinfo.gid;
+/*    USERACCESSCONTROLCREATEDDATE:
+        *write_method = write_userAccessControlCreatedDate;
+        VAR = VALUE;	
+        return (u_char*) &VAR;
+    USERACCESSCONTROLUPDATEDDATE:
+        *write_method = write_userAccessControlUpdatedDate;
+        VAR = VALUE;	
+        return (u_char*) &VAR;
+    USERACCESSCONTROLSTATUS:
+        *write_method = write_userAccessControlStatus;
+        VAR = VALUE;	
+        return (u_char*) &VAR;*/
+    default:
+      ERROR_MSG("");
+    }
+    return NULL;
+}
+
 
 int
 write_userAccessControlID(int      action,
