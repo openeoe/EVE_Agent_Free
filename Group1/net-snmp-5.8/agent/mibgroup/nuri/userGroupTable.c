@@ -99,6 +99,16 @@ oid userGroupTable_variables_oid[] = { 1,3,6,1,4,1,3204,1,3,34,4};
 struct variable4 userGroupTable_variables[] = {
 /*  magic number        , variable type , ro/rw , callback fn  , L, oidsuffix */
 
+#define USERGROUPINDEX		1
+{USERGROUPINDEX,  ASN_UNSIGNED,  RONLY,   var_userGroupTable, 3,  { 2, 1, 1 }},
+#define USERGROUPID		2
+{USERGROUPID,  ASN_INTEGER,  RWRITE,  var_userGroupTable, 3,  { 2, 1, 2 }},
+#define USERGROUPNAME		3
+{USERGROUPNAME,  ASN_OCTET_STR,  RWRITE,  var_userGroupTable, 3,  { 2, 1, 3 }},
+#define USERGROUPDESCRIPTION		4
+{USERGROUPDESCRIPTION,  ASN_OCTET_STR,  RWRITE,  var_userGroupTable, 3,  { 2, 1, 4 }},
+#define USERGROUPSTATUS		5
+{USERGROUPSTATUS,  ASN_INTEGER,  RWRITE,  var_userGroupTable, 3,  { 2, 1, 5 }},
 };
 /*    (L = length of the oidsuffix) */
 
@@ -115,6 +125,99 @@ init_userGroupTable(void)
                userGroupTable_variables_oid);
 
     /* place any other initialization junk you need here */
+}
+
+/*****************************************************************************
+ *
+ * name             :   header_useGroupTable()
+ * description      :   It will generate the index
+ * input parameters :   [struct variable *vp,
+ *                       oid * name,
+ *                        size_t * length,
+ *                        int exact, size_t * var_len, WriteMethod ** write_method]   
+ * output parameters:   [void] -  No output Parameters
+ * return type      :   [int] - index  
+ * global variables :   [ ]
+ * calls            :   [var_userGroupTable]
+ */
+
+
+/*
+ * header_useGroupTable():
+ *   This function is called every time the agent gets a request for
+ *   a scalar variable that might be found within your mib section
+ *   registered above.  It is up to you to do the right thing and
+ *   return the correct value.
+ *     You should also correct the value of "var_len" if necessary.
+ *
+ *   Please see the documentation for more information about writing
+ *   module extensions, and check out the examples in the examples
+ *   and NuriEnterprise directories.
+ */
+int
+header_userGroupTable(struct variable *vp,
+                oid     *name,
+                size_t  *length,
+                int     exact,
+                size_t  *var_len,
+                WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret; static u_long ulong_ret;
+    static unsigned char string[SPRINT_MAX_LEN];
+    static oid objid[MAX_OID_LEN];
+    static struct counter64 c64;
+    #define NAME_LENGTH     14
+    oid             newname[MAX_OID_LEN];
+
+    int             uIdx, ILowIndex = -1;
+    int             IResult;
+
+
+    DEBUGMSGOID (("userGroupTable", name, *length));
+    DEBUGMSG (("userGroupTable", " %d\n", exact));
+
+    memcpy((char *) newname, (char *) vp->name, (int) vp->namelen * sizeof(oid))
+;
+
+    userGroupTable_Init();
+    for (;;) {
+
+	uIdx = userGroupTable_GetNext();
+        if (uIdx == -1)
+            break;
+        newname[NAME_LENGTH] = uIdx;
+        IResult = snmp_oid_compare(name, *length, newname, vp->namelen + 1);
+        if (exact && (IResult == 0)) {
+            ILowIndex = uIdx;
+            break;
+        }
+        if ((!exact && (IResult < 0)) &&
+            (ILowIndex == -1 || uIdx < ILowIndex)) {
+            ILowIndex = uIdx;
+#ifdef GROUPINDEX_MONOTONICALLY_INCREASING
+            break;
+#endif
+        }
+    }
+
+    endgrent ();
+
+  if (ILowIndex == -1) {
+        DEBUGMSGTL(("userGroupTable.c", "... index out of range\n"));
+        return (MATCH_FAILED);
+    }
+
+    memcpy((char *) name, (char *) newname,
+
+   (vp->namelen + 1) * sizeof(oid));
+    *length = vp->namelen + 1;
+    *write_method = 0;
+    *var_len = sizeof(long);    /* default to 'long' results */
+
+    return ILowIndex;
+
+
 }
 
 /*****************************************************************************
@@ -144,6 +247,133 @@ DEBUGMSGTL(("userGroupTable","Get Group Called\n"));
   }
   endgrent();
 }
+    
+
+/*****************************************************************************
+ * name             :   userGroupTable_Init
+ * description      :   Initializes the userGroup table index
+ * input parameters :   None
+ * output parameters:  
+ * return type      :
+ * global variables :   
+ * calls            :   None
+ *****************************************************************************/
+
+void userGroupTable_Init()
+{
+  setgrent();
+  guindex=1;
+}
+
+/*****************************************************************************
+ * name             :   userGroupTable_GetNextInterface
+ * input parameters :   None
+ * output parameters:   
+ * return type      :   void
+ * global variables :   
+ * calls            :   None
+ *****************************************************************************/
+int userGroupTable_GetNext()
+{ 
+  
+        int i=0;
+	if(guindex<=gmaxgroup)
+	{ 
+	          gp=getgrent();		
+                  if (gp == (struct group *) NULL)
+                      return -1;
+		  groupinfo.gid=gp->gr_gid;
+	          strcpy(groupinfo.gname,gp->gr_name);
+		  return guindex++;
+	}
+	else
+    {
+        return -1;
+    }
+}
+
+/*
+ * var_userGroupTable():
+ *   Handle this table separately from the scalar value case.
+ *   The workings of this are basically the same as for var_ above.
+ */
+unsigned char *
+var_userGroupTable(struct variable *vp,
+    	    oid     *name,
+    	    size_t  *length,
+    	    int     exact,
+    	    size_t  *var_len,
+    	    WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+    static unsigned char string[SPRINT_MAX_LEN];
+    static oid objid[MAX_OID_LEN];
+    static struct counter64 c64;
+    static int index=0;
+    static u_long ulong_retu;
+    static struct timeval stDCTimeStamp = {0};
+
+    /* 
+   * This assumes that the table is a 'simple' table.
+   *	See the implementation documentation for the meaning of this.
+   *	You will need to provide the correct value for the TABLE_SIZE parameter
+   *
+   * If this table does not meet the requirements for a simple table,
+   *	you will need to provide the replacement code yourself.
+   *	Mib2c is not smart enough to write this for you.
+   *    Again, see the implementation documentation for what is required.
+   */
+
+    /* Data Caching - invoke system call if "CACHE_TIME" seconds elapsed bet
+ween
+       two successive requests */
+
+    gettimeofday(&stDCTimeStamp, NULL);
+
+    stDCTimeStamp.tv_sec = stDCTimeStamp.tv_sec - gsttDCTimeVal.tv_sec;
+    stDCTimeStamp.tv_usec = stDCTimeStamp.tv_usec - gsttDCTimeVal.tv_usec;
+    ulong_retu = stDCTimeStamp.tv_sec + (stDCTimeStamp.tv_usec/1000000);
+    if(ulong_retu > CACHE_TIME)
+    {
+       userGroupData();
+	 /* CACHE_TIME elapsed bet'n two successive requests */
+    }
+
+   index= header_userGroupTable(vp,name,length,exact,var_len,write_method);
+   if(index== MATCH_FAILED )
+    return NULL;
+
+    /* 
+   * this is where we do the value assignments for the mib results.
+   */
+    switch(vp->magic) {
+    case USERGROUPINDEX:
+        *var_len=sizeof(index); 
+        return (u_char*) &index;
+   case USERGROUPID:
+       //*write_method = write_userGroupID;
+        *var_len=sizeof(groupinfo.gid);
+	return (u_char*)&groupinfo.gid; 
+    case USERGROUPNAME:
+      //*write_method = write_userGroupName;
+        *var_len=strlen(groupinfo.gname);
+        return (u_char*) groupinfo.gname;
+   /* USERGROUPDESCRIPTION:
+        *write_method = write_userGroupDescription;
+        VAR = VALUE;	
+        return (u_char*) &VAR;
+    USERGROUPSTATUS:
+        *write_method = write_userGroupStatus;
+        VAR = VALUE;	
+        return (u_char*) &VAR;*/
+    default:
+      ERROR_MSG("");
+    }
+    return NULL;
+}
+
 
 int
 write_userGroupID(int      action,
