@@ -222,3 +222,67 @@ psRunningTable_GetHandles(int iPid){
 	closedir(fdDir);
 	return iHandles;
 }
+
+/*****************************************************************************
+ * name             :   Date_n_time
+ * description      :   
+ * input parameters :   
+ * output parameters:   None
+ * return type      :   
+ * global variables :   None
+ * calls            :   void
+ *****************************************************************************/
+u_char *
+Date_n_time(time_t * when, size_t * length){
+    struct tm      *tm_p;
+    static u_char   string[11];
+
+    /*
+     * Null time
+     */
+    if (when == NULL || *when == 0 || *when == (time_t) - 1) {
+        string[0] = 0;
+        string[1] = 0;
+        string[2] = 1;
+        string[3] = 1;
+        string[4] = 0;
+        string[5] = 0;
+        string[6] = 0;
+        string[7] = 0;
+        *length = 8;
+        return string;
+    }
+
+
+    /*
+     * Basic 'local' time handling
+     */
+    tm_p = localtime(when);
+    *(short *) string = htons(tm_p->tm_year);
+    string[2] = tm_p->tm_mon + 1;
+    string[3] = tm_p->tm_mday;
+    string[4] = tm_p->tm_hour;
+    string[5] = tm_p->tm_min;
+    string[6] = tm_p->tm_sec;
+    string[7] = 0;
+    *length = 8;
+
+#ifndef cygwin
+    /*
+     * Timezone offset
+     */
+#if !defined(SYSV) && !defined(aix4) && !defined(aix5) && !defined(WIN32) && !defined(irix6)
+#define timezone tm_p->tm_gmtoff
+#endif
+    if (timezone > 0)
+        string[8] = '-';
+    else
+        string[8] = '+';
+    string[9] = abs(timezone) / 3600;
+    string[10] = (abs(timezone) - string[9] * 3600) / 60;
+    *length = 11;
+#endif
+
+
+    return string;
+}
