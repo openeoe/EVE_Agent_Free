@@ -60,3 +60,221 @@ init_fsTable(void)
     /* place any other initialization junk you need here */
 }
 
+/*
+ * var_fsTable():
+ *   This function is called every time the agent gets a request for
+ *   a scalar variable that might be found within your mib section
+ *   registered above.  It is up to you to do the right thing and
+ *   return the correct value.
+ *     You should also correct the value of "var_len" if necessary.
+ *
+ *   Please see the documentation for more information about writing
+ *   module extensions, and check out the examples in the examples
+ *   and mibII directories.
+ */
+int
+header_fsTable(struct variable *vp, 
+                oid     *name, 
+                size_t  *length, 
+                int     exact, 
+                size_t  *var_len, 
+                WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+    static unsigned char string[SPRINT_MAX_LEN];
+    static oid objid[MAX_OID_LEN];
+    static struct counter64 c64;
+
+  /*  if (header_generic(vp,name,length,exact,var_len,write_method)
+                                  == MATCH_FAILED )
+    return NULL;*/
+
+
+    #define HRFSYS_ENTRY_NAME_LENGTH	13
+    oid             newname[MAX_OID_LEN];
+    int             iFsysIdx, iLowIndex = -1;
+    int             iResult;
+
+    DEBUGMSGTL(("nuri/fsTable", "header_fsTable "));
+    DEBUGMSGOID(("nuri/fsTable", name, *length));
+    DEBUGMSG(("nuri/fsTable", " %d\n", exact));
+
+    memcpy((char *) newname, (char *) vp->name, vp->namelen * sizeof(oid));
+    /*
+     * Find "next" file system entry 
+     */
+
+    Init_HR_FileSys();
+    for (;;) {
+        iFsysIdx = Get_Next_HR_FileSys();
+        if (iFsysIdx == -1)
+            break;
+        newname[HRFSYS_ENTRY_NAME_LENGTH] = iFsysIdx;
+        iResult = snmp_oid_compare(name, *length, newname, vp->namelen + 1);
+        if (exact && (iResult == 0)) {
+            iLowIndex = iFsysIdx;
+            break;
+        }
+        if ((!exact && (iResult < 0)) &&
+            (iLowIndex == -1 || iFsysIdx < iLowIndex)) {
+            iLowIndex = iFsysIdx;
+#ifdef HRFS_MONOTONICALLY_INCREASING
+            break;
+#endif
+        }
+    }
+
+    if (iLowIndex == -1) {
+        DEBUGMSGTL(("host/hr_filesys", "... index out of range\n"));
+        return (MATCH_FAILED);
+    }
+
+    memcpy((char *) name, (char *) newname,
+           (vp->namelen + 1) * sizeof(oid));
+    *length = vp->namelen + 1;
+    *write_method = 0;
+    *var_len = sizeof(long);    /* default to 'long' results */
+
+    DEBUGMSGTL(("nuri/fsTable", "... get filesys stats "));
+    DEBUGMSGOID(("nuri/fsTable", name, *length));
+    DEBUGMSG(("nuri/fsTable", "\n"));
+
+    return iLowIndex;
+
+}
+
+
+/*
+ * var_fsTable():
+ *   Handle this table separately from the scalar value case.
+ *   The workings of this are basically the same as for var_ above.
+ */
+unsigned char *
+var_fsTable(struct variable *vp,
+    	    oid     *name,
+    	    size_t  *length,
+    	    int     exact,
+    	    size_t  *var_len,
+    	    WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+    static unsigned char string[SPRINT_MAX_LEN];
+    static oid objid[MAX_OID_LEN];
+    static struct counter64 c64;
+   
+    static int iFsysIdx;
+    static unsigned long ulTemp;
+    static struct statfs stStatFs;
+    static struct stat stStat;
+    /* 
+   * This assumes that the table is a 'simple' table.
+   *	See the implementation documentation for the meaning of this.
+   *	You will need to provide the correct value for the TABLE_SIZE parameter
+   *
+   * If this table does not meet the requirements for a simple table,
+   *	you will need to provide the replacement code yourself.
+   *	Mib2c is not smart enough to write this for you.
+   *    Again, see the implementation documentation for what is required.
+   */
+ /*   if (header_simple_table(vp,name,length,exact,var_len,write_method, TABLE_SIZE)
+                                                == MATCH_FAILED )
+    return NULL; */
+
+    iFsysIdx = header_fsTable(vp, name, length, exact, var_len, write_method);
+    if(iFsysIdx == MATCH_FAILED){
+        return NULL;
+    }
+    if(statfs(HRFS_entry->mnt_dir,(struct statfs *)&stStatFs)<0){
+        return NULL;
+    }
+    if(stat(HRFS_entry->mnt_dir,(struct stat *)&stStat)<0){
+        return NULL;
+    }
+    *var_len = sizeof(unsigned long);
+  /* 
+   * this is where we do the value assignments for the mib results.
+   */
+    switch(vp->magic) {
+    case FSINDEX:
+        long_ret = iFsysIdx;
+        return (u_char*) &long_ret;
+    case FSID:
+        sprintf(string,"%d",stStat.st_dev);  /* File system identifier */
+        *var_len = strlen(string);
+        return (u_char*) string;
+    case FSNAME:
+        sprintf(string,"%s",HRFS_entry->mnt_dir);	/* File system name */
+        *var_len = strlen(string);
+        return (u_char*) string;
+    case FSCAPACITY:
+        long_ret = ((long long)stStatFs.f_bsize * stStatFs.f_blocks)/KBYTE;	/* File system capacity in Kilobytes */
+        return (u_char*) &long_ret;
+    case FSTYPE:
+        sprintf(string,"%s",HRFS_entry->mnt_type);	/* File system type */
+        *var_len = strlen(string);	
+        return (u_char*) string;
+    case FSFREE:
+        long_ret = ((long long) stStatFs.f_bavail * stStatFs.f_bsize)/KBYTE;	/* File system Free space in Kilo bytes*/
+        return (u_char*) &long_ret;
+    case FSRATIO:
+        ulTemp = (u_long)((stStatFs.f_blocks - stStatFs.f_bavail) * 100);
+        if(stStatFs.f_blocks == 0){
+	       	long_ret = 0;
+        }else{
+         	long_ret = ulTemp / (unsigned long)stStatFs.f_blocks;
+       	}
+       	return (u_char*) &long_ret;
+    case FSUTILIZATION:
+       ulTemp = ((unsigned long)stStatFs.f_blocks - (unsigned long)stStatFs.f_bfree) *100;
+       if(stStatFs.f_blocks == 0){
+           long_ret = 0;
+       }
+       else{
+           long_ret = ulTemp / (unsigned long)stStatFs.f_blocks;
+	}
+        return (u_char*) &long_ret;
+    case FSINODERATIO:
+        ulTemp = (unsigned long)(stStatFs.f_files - stStatFs.f_ffree) * 100;
+	if(stStatFs.f_files == 0){
+	    long_ret = 0;
+	}
+	else{
+            long_ret = ulTemp / (unsigned long)stStatFs.f_files;	/* Inodes used to Total Inodes ratio */
+	}
+        return (u_char*) &long_ret;
+    case FSLOGICALVOLNAME:
+        sprintf(string,"%s",HRFS_entry->mnt_fsname);   /* Logical volume name */
+        *var_len = strlen(string);
+        return (u_char*) string;
+    case FSTOTALINODESINFS:
+        long_ret = stStatFs.f_files;	/* Total Inodes of filesystem */
+        return (u_char*) &long_ret;
+    case FSFREEINODESINFS:
+        long_ret = stStatFs.f_ffree;	/* Free Inodes of filesystem */
+        return (u_char*) &long_ret;
+    case FSUSEDINODES:
+        long_ret = stStatFs.f_files - stStatFs.f_ffree;    /* Used Inodes */
+        return (u_char*) &long_ret;
+    case FSUSERFREESPACE:
+        long_ret = ((unsigned long)stStatFs.f_bsize/KBYTE) * (unsigned long)stStatFs.f_bavail;	/* Free space available to non-super user */
+        return (u_char*) &long_ret;
+    case FSBLOCKSIZE:
+        long_ret = stStatFs.f_bsize;	/* File system block size */
+        return (u_char*) &long_ret;
+    case FSFREEBLOCKS:
+        long_ret = stStatFs.f_bfree;	/* Free blocks on file system */
+        return (u_char*) &long_ret;
+    case FSTOTALBLOCKS:
+        long_ret = stStatFs.f_blocks;	/* Total data blocks in file system */
+        return (u_char*) &long_ret;
+    default:
+      ERROR_MSG("");
+    }
+    return NULL;
+}
+
+
