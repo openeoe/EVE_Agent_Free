@@ -36,6 +36,58 @@ oid psRunningTable_variables_oid[] = { 1,3,6,1,4,1,3204,1,3,33 };
 struct variable4 psRunningTable_variables[] = {
 /*  magic number        , variable type , ro/rw , callback fn  , L, oidsuffix */
 
+#define PSRUNNINGPID		1
+{PSRUNNINGPID,  ASN_UNSIGNED,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 1 }},
+#define PSRUNNINGPGID		2
+{PSRUNNINGPGID,  ASN_UNSIGNED,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 2 }},
+#define PSRUNNINGPPID		3
+{PSRUNNINGPPID,  ASN_UNSIGNED,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 3 }},
+#define PSRUNNINGNAME		4
+{PSRUNNINGNAME,  ASN_OCTET_STR,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 4 }},
+#define PSRUNNINGSTATE		5
+{PSRUNNINGSTATE,  ASN_INTEGER,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 5 }},
+#define PSAGE		6
+{PSAGE,  ASN_TIMETICKS,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 6 }},
+#define PSRUNNINGPRIORITY		7
+{PSRUNNINGPRIORITY,  ASN_INTEGER,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 7 }},
+#define PSRUNNINGSIZE		8
+{PSRUNNINGSIZE,  ASN_INTEGER,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 8 }},
+#define PSRUNNINGRSS		9
+{PSRUNNINGRSS,  ASN_INTEGER,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 9 }},
+#define PSRUNNINGPAGEFAULTS		10
+{PSRUNNINGPAGEFAULTS,  ASN_COUNTER,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 10 }},
+#define PSRUNNINGHARDPAGEFAULTS		11
+{PSRUNNINGHARDPAGEFAULTS,  ASN_COUNTER,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 11 }},
+#define PSRUNNINGCONTEXTSWITCHES		12
+{PSRUNNINGCONTEXTSWITCHES,  ASN_COUNTER,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 12 }},
+#define PSRUNNINGTHREADS		13
+{PSRUNNINGTHREADS,  ASN_GAUGE,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 13 }},
+#define PSRUNNINGHANDLES		14
+{PSRUNNINGHANDLES,  ASN_GAUGE,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 14 }},
+#define PSRUNNINGPERCENTCPU		15
+{PSRUNNINGPERCENTCPU,  ASN_INTEGER,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 15 }},
+#define PSRUNNINGKERNELTIME		16
+{PSRUNNINGKERNELTIME,  ASN_TIMETICKS,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 16 }},
+#define PSRUNNINGUSERTIME		17
+{PSRUNNINGUSERTIME,  ASN_TIMETICKS,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 17 }},
+#define PSRUNNINGSTARTTIME		18
+{PSRUNNINGSTARTTIME,  ASN_OCTET_STR,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 18 }},
+#define PSRUNNINGUID		19
+{PSRUNNINGUID,  ASN_UNSIGNED,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 19 }},
+#define PSRUNNINGUSERNAME		20
+{PSRUNNINGUSERNAME,  ASN_OCTET_STR,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 20 }},
+#define PSRUNNINGDEVICE		21
+{PSRUNNINGDEVICE,  ASN_OCTET_STR,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 21 }},
+#define PSRUNNINGCOMMANDLINE		22
+{PSRUNNINGCOMMANDLINE,  ASN_OCTET_STR,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 22 }},
+#define PSRUNNINGFILEPATH		23
+{PSRUNNINGFILEPATH,  ASN_OCTET_STR,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 23 }},
+#define PSRUNNINGCWD		24
+{PSRUNNINGCWD,  ASN_OCTET_STR,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 24 }},
+#define PSRUNNINGPERCENTRSS		25
+{PSRUNNINGPERCENTRSS,  ASN_INTEGER,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 25 }},
+#define PSRUNNINGPERCENTSIZE		26
+{PSRUNNINGPERCENTSIZE,  ASN_INTEGER,  RWRITE,  var_psRunningTable, 3,  { 1, 1, 26 }},
 };
 /*    (L = length of the oidsuffix) */
 
@@ -125,6 +177,469 @@ init_psRunningTable(void)
                psRunningTable_variables_oid);
 
     /* place any other initialization junk you need here */
+}
+
+int
+header_psRunningTable(struct variable *vp, 
+                oid     *name, 
+                size_t  *length, 
+                int     exact, 
+                size_t  *var_len, 
+                WriteMethod **write_method)
+{
+   /* variables we may use later */
+   #define NAME_LENGTH 13
+   static long long_ret;
+   static u_long ulong_ret;
+   static unsigned char string[SPRINT_MAX_LEN];
+   static oid newname[MAX_OID_LEN];
+   static struct counter64 c64;
+
+   static int IPid;
+   static int IResult;
+   int ILowPid=-1;
+
+   memcpy((char *) newname, (char *) vp->name, vp->namelen * sizeof(oid));
+
+    /*
+     *  Find the "next" running process
+     */
+    
+   psRunningTable_Init();
+    for (;;) {
+    IPid = psRunningTable_GetNextProc();
+    if (IPid == -1)
+        break;
+    newname[NAME_LENGTH] = IPid;
+    DEBUGMSGOID(("nuri/Process", newname, *length));
+    DEBUGMSG(("nuri/Process", "\n"));
+    IResult = snmp_oid_compare(name, *length, newname, vp->namelen + 1);
+    if (exact && (IResult == 0)) 
+    {
+            ILowPid = IPid;
+            DEBUGMSGTL(("nuri/Process", " saved\n"));
+            /*
+             * Save process status information
+             */
+            break;
+    }
+    if ((!exact && (IResult < 0)) && (ILowPid == -1 || IPid < ILowPid)) {
+    	ILowPid = IPid;
+            /*
+             * Save process status information
+             */
+            DEBUGMSG(("nuri/Process", " saved"));
+        }
+        DEBUGMSG(("nuri/Process", "\n"));
+  }
+    psRunningTable_End();
+
+    if (ILowPid == -1) {
+        DEBUGMSGTL(("nuri/Process", "... index out of range\n"));
+        return (MATCH_FAILED);
+    }
+
+    newname[NAME_LENGTH] = ILowPid;
+    memcpy((char *) name, (char *) newname, (vp->namelen + 1) * sizeof(oid));
+    *length = vp->namelen + 1;
+    *write_method = 0;
+    *var_len = sizeof(long);    /* default to 'long' results */
+
+    DEBUGMSGTL(("nuri/Process", "... get process stats "));
+    DEBUGMSGOID(("nuri/Process", name, *length));
+    DEBUGMSG(("nuri/Process", "\n"));
+    return ILowPid;
+
+}
+
+/*
+ * var_psRunningTable():
+ *   Handle this table separately from the scalar value case.
+ *   The workings of this are basically the same as for var_ above.
+ */
+unsigned char *
+var_psRunningTable(struct variable *vp,
+    	    oid     *name,
+    	    size_t  *length,
+    	    int     exact,
+    	    size_t  *var_len,
+    	    WriteMethod **write_method)
+{
+    /* variables we may use later */
+    static long long_ret;
+    static u_long ulong_ret;
+    static oid objid[MAX_OID_LEN];
+    static struct counter64 c64;
+    static unsigned char string[SPRINT_MAX_LEN];
+    static struct passwd *psPasswd = NULL;
+
+    static gstPsStat stPsStat;
+    static char szBuff [128];
+    static unsigned long   ulUptime = 0, ulTemp1, ulTemp2;
+    static unsigned long long ullTotalUtlTime = 0;
+    static unsigned long long ullTotalTime = 0;
+    static unsigned long ulMemTotal = 0;
+    static unsigned uPCpu = 0;
+    static unsigned uPMem = 0;
+    static int      fd;
+    static int      iResult;
+    static char    *buff = NULL;
+    static int      iBuffSize = 0;
+    static char     *pcPos;
+    time_t tTempTime = 0;
+    time_t tCurTime = 0;
+    int iPid;
+    struct timeval stDCTimeStamp = {0};
+
+ 
+  /* 
+   * This assumes that the table is a 'simple' table.
+   *	See the implementation documentation for the meaning of this.
+   *	You will need to provide the correct value for the TABLE_SIZE parameter
+   *
+   * If this table does not meet the requirements for a simple table,
+   *	you will need to provide the replacement code yourself.
+   *	Mib2c is not smart enough to write this for you.
+   *    Again, see the implementation documentation for what is required.
+   */
+
+    iPid = header_psRunningTable(vp,name,length,exact,var_len,write_method);
+    if (iPid == MATCH_FAILED )
+	    return NULL;
+    psRunningTable_GetProcStat(iPid, &stPsStat);
+/*
+    gettimeofday(&stDCTimeStamp, NULL);
+
+    stDCTimeStamp.tv_sec = stDCTimeStamp.tv_sec - gstDCTimeVal.tv_sec;
+    stDCTimeStamp.tv_usec = stDCTimeStamp.tv_usec - gstDCTimeVal.tv_usec;
+    ulong_ret = stDCTimeStamp.tv_sec + (stDCTimeStamp.tv_usec / MICROSEC); 
+    if(ulong_ret > CACHE_TIMEOUT){
+         psRunningTable_GetProcStat(iPid, &stPsStat);
+    }
+*/
+    *var_len = sizeof(unsigned long);	
+
+    /* 
+   * this is where we do the value assignments for the mib results.
+   */
+    switch(vp->magic) {
+    case PSRUNNINGPID:
+        ulong_ret = iPid;
+        DEBUGMSGTL(("psRunningTable", "PSRUNNINGPID: %d\n",iPid));
+        return (u_char*) &ulong_ret;
+    case PSRUNNINGPGID:
+        ulong_ret =  stPsStat.iPsGid;
+	DEBUGMSGTL(("psRunningTable", "PSRUNNINGPID: %d\n",iPid));
+	return (u_char*) &ulong_ret;
+    case PSRUNNINGPPID:
+        ulong_ret = stPsStat.iPsPPid;
+   	DEBUGMSGTL(("psRunningTable", "PSRUNNINGPID: %d\n",iPid));
+        return (u_char*) &ulong_ret;
+    case PSRUNNINGNAME:
+    	sprintf(gString, "%s", stPsStat.szPsName);	
+       	*var_len = strlen(gString);
+        DEBUGMSGTL(("psRunningTable", "PSRUNNINGNAME: %s\n", gString));
+       	return (u_char*) gString;
+    case PSRUNNINGSTATE:
+     	DEBUGMSGTL(("psRunningTable", "PSRUNNINGSTATE: %c\n", stPsStat.cPsState));
+       	switch(stPsStat.cPsState){
+#if 0
+	    case 'T':
+	        ulong_ret = 0;  /* T is traced or stopped on a signal */
+		break;
+#endif
+	    case 'S':
+	    	ulong_ret = 3;  /* sleeping in an interruptible wait */
+		break;
+	    case 'R':
+		ulong_ret = 4;  /* Running */
+		break;
+	    case 'Z':  
+		ulong_ret = 5;  /* Zombie  */
+		break;
+	    default:
+		ulong_ret = 6;  /* D is sleeping in an uninterruptible wait or swapping */
+       	}
+       	return (u_char*) &ulong_ret;
+    case PSAGE:
+	ullTotalTime = ulUptime = 0;
+	fpProc = fopen("/proc/uptime", "r");
+    	if (fpProc){
+            if (2 == fscanf(fpProc, "%lu.%lu", &ulTemp1, &ulTemp2))
+            	ulUptime = ulTemp1;
+            if(fpProc)
+	        fclose(fpProc);
+    	}
+	else{
+	    snmp_log(LOG_ERR, "/proc/uptime open error\n");
+	}
+        ullTotalTime = (ulUptime - (stPsStat.ulPsStartTime / 100)) * 100;/* in jiffies */
+	*var_len = sizeof(unsigned long);
+	return (u_char*) &ullTotalTime;
+    case PSRUNNINGPRIORITY:
+        ulong_ret = stPsStat.lPsPriority;
+   	DEBUGMSGTL(("psRunningTable", "PSRUNNINGPRIORITY: %ld\n", ulong_ret));
+        return (u_char*) &ulong_ret;
+    case PSRUNNINGSIZE:
+        ulong_ret = stPsStat.ulPsVmSize;
+   	DEBUGMSGTL(("psRunningTable", "PSRUNNINGSIZE: %ld\n", ulong_ret));
+        return (u_char*) &ulong_ret;
+    case PSRUNNINGRSS:
+        ulong_ret = stPsStat.ulPsVmRSS;
+   	DEBUGMSGTL(("psRunningTable",  "PSRUNNINGRSS: %ld\n", ulong_ret));
+        return (u_char*) &ulong_ret;
+    case PSRUNNINGPAGEFAULTS:
+        ulong_ret = stPsStat.ulPsMin_Flt + stPsStat.ulPsMaj_Flt;
+        DEBUGMSGTL(("psRunningTable", "PSRUNNINGPAGEFAULTS: %ld\n", ulong_ret));
+        return (u_char*) &ulong_ret;
+    case PSRUNNINGHARDPAGEFAULTS:
+        ulong_ret = stPsStat.ulPsMaj_Flt;
+   	DEBUGMSGTL(("psRunningTable", "PSRUNNINGPAGEFAULTS: %ld\n", ulong_ret));
+        return (u_char*) &ulong_ret;
+    case PSRUNNINGHANDLES:
+        ulong_ret = psRunningTable_GetHandles(iPid);
+   	DEBUGMSGTL(("psRunningTable", "PSRUNNINGHANDLES: %ld\n", ulong_ret));
+	return (u_char*) &ulong_ret;
+   case PSRUNNINGPERCENTCPU:
+    	ullTotalUtlTime = (stPsStat.lPsSTime + stPsStat.lPsUTime)/100;/* in seconds *//*      ullTotalUtlTime = (stPsStat.lPsSTime + stPsStat.lPsUTime); // in jiffies */
+	fpProc = fopen("/proc/uptime", "r");
+    	if (fpProc) {
+        	if (2 == fscanf(fpProc, "%lu.%lu", &ulTemp1, &ulTemp2))
+            		ulUptime = ulTemp1;
+        	if(fpProc)
+	            fclose(fpProc);
+    	}
+        ullTotalTime = ulUptime - (stPsStat.ulPsStartTime / 100);
+	if(ullTotalTime == 0)
+	    uPCpu = 0;
+	else
+	    uPCpu = (ullTotalUtlTime * 100) / ullTotalTime;
+	if(uPCpu > 99)
+	    uPCpu = 99;	
+	DEBUGMSGTL(("psRunningTable", "PSRUNNINGPERCENTCPU: %ld\n", uPCpu));
+        return (u_char*) &uPCpu;
+    case PSRUNNINGKERNELTIME:
+        ulong_ret = stPsStat.lPsSTime;  /* in jiffies */
+        return (u_char*) &ulong_ret; 
+    case PSRUNNINGUSERTIME:
+      	ulong_ret = stPsStat.lPsUTime; /* in jiffies */
+   	DEBUGMSGTL(("psRunningTable", "PSRUNNINGUSERTIME: %ld\n", ulong_ret));
+        return (u_char*) &ulong_ret;
+    case PSRUNNINGSTARTTIME:
+        fpProc = fopen("/proc/uptime", "r");
+    	if (fpProc){
+            if (1 == fscanf(fpProc, "%lu", &ulTemp1))
+            	ulUptime = ulTemp1;
+            if(fpProc)
+	        fclose(fpProc);
+    	}
+	else{
+	    snmp_log(LOG_ERR, "/proc/uptime open error\n");
+	}
+        time(&tCurTime);
+	*var_len = 0;
+	tTempTime = tCurTime  - ulUptime  + stPsStat.ulPsStartTime/100 ;
+        strcpy(gString, date_n_time(&tTempTime, var_len)); /* in jiffies */
+	DEBUGMSGTL(("psRunningTable", "PSRUNNINGSTARTTIME: %s\n", gString));
+	*var_len = strlen(gString);
+        return (u_char*) gString;    
+    case PSRUNNINGUID:
+        ulong_ret = stPsStat.iPsUid;
+        return (u_char*) &ulong_ret; 
+    case PSRUNNINGUSERNAME:
+	psPasswd = getpwuid(stPsStat.iPsUid);
+	if(psPasswd != NULL)
+		sprintf(gString,"%s", psPasswd->pw_name); 
+	else
+		strcpy(gString, "");
+ 	*var_len = strlen(gString);
+	return (u_char*) gString;
+    case PSRUNNINGDEVICE:
+	if(stPsStat.iPsTTY == 0)
+            strcpy(gString, "?");
+	else{
+            strcpy(gString,"/proc/devices");
+	    fpProc = fopen(gString, "r");
+    	    if(fpProc){
+                while(fgets(szBuff, 80, fpProc) != NULL){
+		    sprintf(string, "%d", major(stPsStat.iPsTTY));
+	            pcPos = strstr(szBuff, string);
+    	            if(pcPos){
+	               sscanf(szBuff, "%lu %s", &ulTemp1, string);
+	               break;
+		    }
+	        }
+		sprintf(gString, "/dev/%s/%d", string, minor(stPsStat.iPsTTY));/* ttyS not fixed */
+	        fclose(fpProc);
+	    }
+	    else{
+		DEBUGMSGTL(("psRunningTable", "%s open error\n", gString));
+	        sprintf(gString, "/dev/pts/%d", minor(stPsStat.iPsTTY)); /* wont be pts always...fix it */
+            }
+	}
+   	DEBUGMSGTL(("psRunningTable", "PSRUNNINGPAGEFAULTS: %s\n", gString));
+	*var_len = strlen(gString);
+        return (u_char*) gString;   
+    case PSRUNNINGCOMMANDLINE:
+	sprintf(gString,"/proc/%d/cmdline", iPid);
+	if ((fpProc = fopen(gString, "r")) == NULL)
+	    return NULL;
+	memset(szBuff, 0, sizeof(szBuff));
+	/*
+	 * argv[0] '\0' argv[1] '\0' ....
+	 */
+	if (!fgets(szBuff, sizeof(szBuff) - 2, fpProc)) {
+	    /*
+	     * maybe be empty (even argv[0] is missing)
+	     */
+	    gString[0] = '\0';
+	    *var_len = 0;
+	    fclose(fpProc);
+	    return gString;
+	}
+
+	/*
+	 * Skip over argv[0]
+	 */
+	pcPos = szBuff;
+	while (*pcPos)
+	    ++pcPos;
+	++pcPos;
+	/*
+	 * Now join together separate arguments.
+	 */
+	while (1) {
+	    while (*pcPos)
+		++pcPos;
+	    if (*(pcPos + 1) == '\0')
+		break;		/* '\0''\0' => End of command line */
+	    *pcPos = ' ';
+	}
+
+	pcPos = szBuff;
+	while (*pcPos)
+	    ++pcPos;
+	++pcPos;
+	strcpy(gString, pcPos);
+	fclose(fpProc);
+	*var_len = strlen(gString);
+	return (u_char*) gString;
+    case PSRUNNINGFILEPATH:
+	sprintf(gString,"/proc/%d/exe", iPid);
+	iResult = readlink(gString, szBuff, sizeof(szBuff));
+	if(iResult == -1){
+		strcpy(gString, "");
+	}
+	else{
+		szBuff[iResult] = '\0';
+		strcpy(gString, szBuff);
+	}
+	*var_len = strlen(gString);
+	return (u_char*) gString;
+    case PSRUNNINGCWD:
+       sprintf(gString, "/proc/%d/environ", iPid);
+       fpProc = fopen(gString, "r");
+       strcpy(gString, "");
+       if(fpProc != NULL){
+           while(fgets(szBuff, 128, fpProc) != NULL){
+	       pcPos = strstr(szBuff, "PWD");
+    	       if (pcPos){
+	           pcPos += strlen(PWD);
+	           strcpy(gString, pcPos);
+	           break;
+		}
+	    }
+	    if(fpProc)
+	        fclose(fpProc);
+	}else{
+	    snmp_log(LOG_ERR, "/proc/%d/environ error\n", iPid);
+	}
+	*var_len = strlen(gString); 
+        return (u_char*) &gString;
+    case PSRUNNINGPERCENTRSS:
+        if(stPsStat.ulPsVmRSS_rlimit)
+            ulong_ret = ( stPsStat.ulPsVmRSS * 100 ) / stPsStat.ulPsVmRSS_rlimit;
+        else
+            ulong_ret = 0;
+	return (u_char*) &ulong_ret;
+    case PSRUNNINGPERCENTSIZE:
+        fpProc = fopen("/proc/meminfo", "r");
+    	if (fpProc){
+            while(fgets(szBuff, 128, fpProc) != NULL){
+        	if(!strncmp(szBuff, "MemTotal:", 9)){
+                    sscanf(szBuff + 10, "%lu", &ulMemTotal);
+		}
+	    }
+	    if(fpProc)
+	        fclose(fpProc);
+	    if(ulMemTotal == 0)
+		uPMem = 0;
+	    else
+		uPMem = (stPsStat.ulPsVmRSS * 100) / ulMemTotal;
+	}
+	else{
+	   snmp_log(LOG_ERR, "/proc/meminfo open error\n");
+	}
+        
+	return (u_char*) &uPMem;
+    default:
+     // error_msg("");
+     return NULL;
+    }
+    return NULL;
+}
+
+
+/*****************************************************************************
+ * name             :   psRunningTable_Init
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   void
+ * global variables :   None
+ * calls            :   None
+ *****************************************************************************/
+static void psRunningTable_Init(){
+    if (fdDir != NULL)
+        closedir(fdDir);
+    fdDir = opendir("/proc");
+}
+
+/*****************************************************************************
+ * name             :   psRunningTable_GetNextProc
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   int
+ * global variables :   None
+ * calls            :   None
+ *****************************************************************************/
+static int psRunningTable_GetNextProc(){
+    int       pid;
+    pstFdDir = readdir(fdDir);
+
+    if (pstFdDir == NULL)
+        return -1;
+
+    pid = atoi(pstFdDir->d_name);
+    if (pid == 0)
+        return (psRunningTable_GetNextProc());
+    return pid;
+}
+
+/*****************************************************************************
+ * name             :   psRunningTable_End
+ * description      :   
+ * input parameters :   None
+ * output parameters:   None
+ * return type      :   void
+ * global variables :   None
+ * calls            :   None
+ *****************************************************************************/
+static void psRunningTable_End(){
+    if (fdDir)
+        closedir(fdDir);
+    fdDir = NULL;
 }
 
 /*****************************************************************************
